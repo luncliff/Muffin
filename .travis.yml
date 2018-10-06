@@ -1,0 +1,47 @@
+# ---------------------------------------------------------------------------
+#
+#   Author
+#     - luncliff@gmail.com
+#
+# ---------------------------------------------------------------------------
+sudo: false
+
+git:
+  submodules: true
+  depth: 1
+
+notifications:
+  email:
+    - luncliff@gmail.com
+
+language: android
+addons:
+  apt:
+    update: true
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - tree
+      - wget
+      - unzip
+android:
+  components:
+    - tools
+    - platform-tools
+    - build-tools-26.0.2
+    - android-26
+    - sys-img-armeabi-v7a-android-26
+install:
+  - yes | sdkmanager --update > /dev/null 2>&1;
+  - sdkmanager ndk-bundle > /dev/null 2>&1;
+  - wget https://services.gradle.org/distributions/gradle-4.10.2-bin.zip;
+  - unzip -q gradle-4.10.2-bin.zip;
+  - export GRADLE=./gradle-4.10.2/bin/gradle
+before_script:
+  - cd ${TRAVIS_BUILD_DIR};
+  - bash $GRADLE --version
+script:
+  - bash $GRADLE clean
+  - bash $GRADLE assemble
+after_success:
+  - tree ./install
