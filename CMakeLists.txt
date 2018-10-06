@@ -15,10 +15,8 @@ endif() #
 # Set variables
 set(ROOT_DIR    ${CMAKE_SOURCE_DIR})
 set(PROJECT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug) # Debug by default
-endif()
-set(BUILD_SHARED_LIBS true)
+
+set(BUILD_SHARED_LIBS true) # make .so file for JNI
 
 # `link_driectories` must come before project creation
 # link_directories(
