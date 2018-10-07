@@ -1,5 +1,6 @@
-
 # Muffin
+[![Build Status](https://travis-ci.org/luncliff/Muffin.svg?branch=master)](https://travis-ci.org/luncliff/Muffin)
+
 Android Library Project Template. Both for Java/JNI.
 
   - API level: 24+
