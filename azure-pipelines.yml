@@ -6,9 +6,18 @@
 pool:
   vmImage: 'macOS 10.13'
 
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/languages/java?view=vsts#build-your-code-with-gradle
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/languages/android?view=vsts
 steps:
-- task: Gradle@2
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema?view=vsts#checkout
+- checkout: self  
+  fetchDepth: 2
+  submodules: true
+- script: gradle wrapper
+  displayName: 'Make Gradlew'
+- task: Gradle@2 
   inputs:
     workingDirectory: ''
+    gradleWrapperFile: 'gradlew'
     gradleOptions: '-Xmx3072m'
     tasks: 'assemble'
