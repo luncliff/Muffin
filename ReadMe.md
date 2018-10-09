@@ -1,5 +1,5 @@
 # Muffin
-[![Build Status](https://travis-ci.org/luncliff/Muffin.svg?branch=master)](https://travis-ci.org/luncliff/Muffin)
+[![Build Status](https://dev.azure.com/luncliff/personal/_apis/build/status/luncliff.Muffin)](https://dev.azure.com/luncliff/personal/_build/latest?definitionId=2) [![Build Status](https://travis-ci.org/luncliff/Muffin.svg?branch=master)](https://travis-ci.org/luncliff/Muffin)
 
 Android Library Project Template. Both for Java/JNI.
 
@@ -12,9 +12,7 @@ Android Library Project Template. Both for Java/JNI.
 
 ## How to
 ### Build
-For **Windows** environment, latest [Android Studio](https://developer.android.com/studio/) is recommended.   
-For **Linux/MacOS**, [Gradle 4.4+](https://gradle.org/) will be enough.   
-
+The build step uses [Gradle **4.10.2**](https://gradle.org/). If you don't know how to use it, latest [Android Studio](https://developer.android.com/studio/) can do the work.   
 ```console
 $ git clone https://github.com/luncliff/Muffin
 $ cd ./Muffin
