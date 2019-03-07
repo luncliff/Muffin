@@ -11,7 +11,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.1.4'
+        classpath 'com.android.tools.build:gradle:3.3.0'
     }
 }
 
@@ -46,8 +46,8 @@ android {
         targetSdkVersion 27
 
         // Follow native code's verson
-        versionCode 2
-        versionName "1.0"
+        versionCode 3
+        versionName "1.0.1"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
         // External Native build: CMake
@@ -125,7 +125,6 @@ assemble.doLast
         into 'install/aar'
     }
 }
-
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])

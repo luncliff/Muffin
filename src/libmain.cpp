@@ -9,7 +9,8 @@
 #define LIB_PROLOGUE __attribute__((constructor))
 #define LIB_EPILOGUE __attribute__((destructor))
 
-std::shared_ptr<spdlog::logger> logger{};
+using logger_ptr_t = std::shared_ptr<spdlog::logger>;
+logger_ptr_t logger{};
 
 // On dll is attached...
 LIB_PROLOGUE void OnAttach(void *) noexcept(false)

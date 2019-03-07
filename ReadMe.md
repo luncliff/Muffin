@@ -19,7 +19,40 @@ $ cd ./Muffin
 $ gradle assemble               # Build: libmuffin.so & Muffin.aar
 ```
 
+After build, you can find the results in `install/` directory
+
+```console
+$ tree ./install
+./install/
+├── aar
+│   └── Muffin.aar
+└── libs
+    ├── Debug
+    │   ├── arm64-v8a
+    │   │   ├── libc++_shared.so
+    │   │   └── libmuffin.so
+    │   ├── armeabi-v7a
+    │   │   ├── libc++_shared.so
+    │   │   └── libmuffin.so
+    │   └── x86_64
+    │       ├── libc++_shared.so
+    │       └── libmuffin.so
+    └── Release
+        ├── arm64-v8a
+        │   ├── libc++_shared.so
+        │   └── libmuffin.so
+        ├── armeabi-v7a
+        │   ├── libc++_shared.so
+        │   └── libmuffin.so
+        └── x86_64
+            ├── libc++_shared.so
+            └── libmuffin.so
+
+10 directories, 13 files
+```
+
 ### Test
+
 Connect your device and run the test with Gradle.
 Please reference the [test codes](./android/test/muffin/). 
 ```console

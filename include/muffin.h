@@ -1,9 +1,8 @@
-// ---------------------------------------------------------------------------
 //
 //  Author
 //      luncliff@gmail.com
 //
-// ---------------------------------------------------------------------------
+#pragma once
 
 #define _INTERFACE_     __attribute__((visibility("default")))
 #define _C_INTERFACE_   extern "C" __attribute__((visibility("default")))
@@ -11,6 +10,10 @@
 
 #ifndef MUFFIN_INCLUDE_H
 #define MUFFIN_INCLUDE_H
+
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
+#include <spdlog/sinks/android_sink.h>
 
 #include <jni.h>
 #include <android/hardware_buffer.h>
@@ -25,16 +28,6 @@
 #include <camera/NdkCameraMetadata.h>
 #include <camera/NdkCameraMetadataTags.h>
 #include <camera/NdkCaptureRequest.h>
-
-#include <memory>
-#include <stdexcept>
-#include <array>
-#include <cstring>
-#include <cassert>
-
-#include <spdlog/spdlog.h>
-#include <spdlog/fmt/ostr.h>
-#include <spdlog/sinks/android_sink.h>
 
 // - Note
 //      Group of java native type variables
