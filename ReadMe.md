@@ -12,7 +12,7 @@ Android Library Project Template. Both for Java/JNI.
 
 ## How to
 ### Build
-The build step uses [Gradle **4.10.2**](https://gradle.org/). If you don't know how to use it, latest [Android Studio](https://developer.android.com/studio/) can do the work.   
+The build step uses [Gradle 5.x](https://gradle.org/). If you don't know how to use it, latest [Android Studio](https://developer.android.com/studio/) can do the work.   
 ```console
 $ git clone https://github.com/luncliff/Muffin
 $ cd ./Muffin
