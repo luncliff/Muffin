@@ -21,6 +21,8 @@ addons:
     sources:
       - ubuntu-toolchain-r-test
     packages:
+      - ninja-build
+      - cmake
       - tree
       - wget
       - unzip
@@ -34,6 +36,13 @@ android:
     - build-tools-28.0.3
 
 before_install:
+  # Install CMake 3.14.1 (build.gradle requires the exact version)
+  - wget -q https://github.com/Kitware/CMake/releases/download/v3.14.1/cmake-3.14.1-Linux-x86_64.tar.gz
+  - tar -xf cmake-3.14.1-Linux-x86_64.tar.gz
+  - pushd ./cmake-3.14.1-Linux-x86_64
+  - sudo mv ./bin/*      /usr/local/bin
+  - sudo mv ./share/*   /usr/local/share
+  - popd
   # Install Gradle from https://sdkman.io/
   - curl -s "https://get.sdkman.io" | bash > /dev/null
   - source "$HOME/.sdkman/bin/sdkman-init.sh"

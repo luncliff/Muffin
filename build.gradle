@@ -1,9 +1,6 @@
-// ---------------------------------------------------------------------------
 //
-//  Author
-//      luncliff@gmail.com
+//  Author:  github.com/luncliff (luncliff@gmail.com)
 //
-// ---------------------------------------------------------------------------
 
 buildscript {    
     repositories {
@@ -46,8 +43,8 @@ android {
         targetSdkVersion 27
 
         // Follow native code's verson
-        versionCode 3
-        versionName "1.0.1"
+        versionCode 4
+        versionName "1.0.2"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
         // External Native build: CMake
@@ -62,6 +59,9 @@ android {
     //  - Give path to CMake
     externalNativeBuild {
         cmake {
+            // it's ok to use 3.8 or later, 
+            // but specify the version since this is an example
+            version "3.14.1" 
             path "CMakeLists.txt"
         }
     }

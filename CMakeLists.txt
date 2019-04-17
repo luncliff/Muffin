@@ -2,8 +2,8 @@
 #  Author
 #      luncliff@gmail.com
 #
-cmake_minimum_required(VERSION 3.6)
-project(muffin LANGUAGES CXX VERSION 1.0.1)
+cmake_minimum_required(VERSION 3.8)
+project(muffin LANGUAGES CXX VERSION 1.0.2)
 
 if(NOT ANDROID) # Ensure android
     message(FATAL_ERROR "this module is only for Android platform")

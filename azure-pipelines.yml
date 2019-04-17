@@ -13,8 +13,17 @@ steps:
 - checkout: self  
   fetchDepth: 2
   submodules: true
+
+# Azure Pipelines's Mac OS already installed CMake 3.14.1
+# - script: brew upgrade cmake
+#   displayName: 'CMake Upgrade'
+
+- script: brew install ninja
+  displayName: 'Install Ninja(Brew)'
+
 - script: gradle wrapper
   displayName: 'Make Gradlew'
+
 - task: Gradle@2 
   inputs:
     workingDirectory: ''
