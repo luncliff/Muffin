@@ -6,6 +6,7 @@
 #define JNI_ADAPTER_H
 #include <muffin.h>
 
+#include <android/log.h>
 #include <android/hardware_buffer.h>
 #include <android/native_window.h>
 #include <android/native_window_jni.h>

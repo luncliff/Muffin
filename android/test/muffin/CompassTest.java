@@ -19,37 +19,33 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-
-/**
- * @author luncliff@gmail.com
- * @link https://developer.android.com/training/testing/unit-testing/local-unit-tests#java
- * @link https://www.baeldung.com/junit-5
- */
-public class NativeTest {
-    @Rule
-    public GrantPermissionRule writeStorage =
-            GrantPermissionRule.grant(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-    @Rule
-    public GrantPermissionRule readStorage =
-            GrantPermissionRule.grant(Manifest.permission.READ_EXTERNAL_STORAGE);
-
+public class CompassTest {
 
     @Test
-    public void checkExecutor() {
+    public void checkPackageName() {
         Context context = ApplicationProvider.getApplicationContext();
         Assertions.assertNotNull(context);
 
-        Executor executor =  context.getMainExecutor();
-        Assertions.assertNotNull(executor);
+        Assertions.assertEquals("dev.muffin.test", context.getPackageName());
     }
 
     @Test
-    public void checkAssetManager() {
+    public void checkMainLooper() {
         Context context = ApplicationProvider.getApplicationContext();
         Assertions.assertNotNull(context);
 
-        try(AssetManager assets = context.getAssets()){
-            Assertions.assertNotNull(assets);
+        Looper looper = context.getMainLooper();
+        Assertions.assertNotNull(looper);
+    }
+
+    @Test
+    public void checkCompassAutoClose() {
+        Context context = ApplicationProvider.getApplicationContext();
+        Assertions.assertNotNull(context);
+
+        try(Compass compass = new Compass(context)){
+            // must guarantee non empty string for its name
+            Assertions.assertNotEquals("", compass.getName());
         }
     }
 }

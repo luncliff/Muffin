@@ -11,8 +11,10 @@
 #if !defined(__ANDROID__) || !defined(__ANDROID_API__)
 #error "requries __ANDROID__ and __ANDROID_API__"
 #endif
+
 #include <stdexcept>
 #include <new>
 #include <experimental/coroutine>
+#include <string_view>
 
 #endif
