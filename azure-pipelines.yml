@@ -1,32 +1,33 @@
-# Android
-# Build your Android project with Gradle.
-# Add steps that test, sign, and distribute the APK, save build artifacts, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/android
+trigger:
+  branches:
+    exclude:
+      - docs
 
-pool:
-  vmImage: 'macOS 10.13'
+jobs:
+  - job: macosx_gradle
+    pool:
+      vmImage: macos-latest
 
-# https://docs.microsoft.com/en-us/azure/devops/pipelines/languages/java?view=vsts#build-your-code-with-gradle
-# https://docs.microsoft.com/en-us/azure/devops/pipelines/languages/android?view=vsts
-steps:
-# https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema?view=vsts#checkout
-- checkout: self  
-  fetchDepth: 2
-  submodules: true
+    steps:
+      - checkout: self
+        submodules: true
 
-# Azure Pipelines's Mac OS already installed CMake 3.14.1
-# - script: brew upgrade cmake
-#   displayName: 'CMake Upgrade'
+      - task: CmdLine@2
+        inputs:
+          script: |
+            brew info cmake
+        displayName: "Homebrew (CMake)"
 
-- script: brew install ninja
-  displayName: 'Install Ninja(Brew)'
+      - task: CmdLine@2
+        inputs:
+          script: |
+            gradle --version
+            gradle wrapper
+        displayName: "Make Gradle Wrapper"
 
-- script: gradle wrapper
-  displayName: 'Make Gradlew'
-
-- task: Gradle@2 
-  inputs:
-    workingDirectory: ''
-    gradleWrapperFile: 'gradlew'
-    gradleOptions: '-Xmx3072m'
-    tasks: 'assemble'
+      - task: Gradle@2
+        inputs:
+          workingDirectory: ""
+          gradleWrapperFile: "gradlew"
+          gradleOptions: "-Xmx3072m"
+          tasks: "assemble"

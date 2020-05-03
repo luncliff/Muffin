@@ -8,5 +8,4 @@ public class MuffinLib {
         System.loadLibrary("c++_shared");
         System.loadLibrary("muffin");
     }
-
 }
