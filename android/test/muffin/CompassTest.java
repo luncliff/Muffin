@@ -25,27 +25,33 @@ public class CompassTest {
     public void checkPackageName() {
         Context context = ApplicationProvider.getApplicationContext();
         Assertions.assertNotNull(context);
-
         Assertions.assertEquals("dev.muffin.test", context.getPackageName());
     }
 
     @Test
-    public void checkMainLooper() {
+    public void checkCompassHasName() {
         Context context = ApplicationProvider.getApplicationContext();
         Assertions.assertNotNull(context);
-
-        Looper looper = context.getMainLooper();
-        Assertions.assertNotNull(looper);
-    }
-
-    @Test
-    public void checkCompassAutoClose() {
-        Context context = ApplicationProvider.getApplicationContext();
-        Assertions.assertNotNull(context);
-
         try(Compass compass = new Compass(context)){
             // must guarantee non empty string for its name
             Assertions.assertNotEquals("", compass.getName());
         }
     }
+
+    @Test
+    public void checkCompassMultiplePause() {
+        try(Compass compass = new Compass(ApplicationProvider.getApplicationContext())){
+            compass.pause();
+            compass.pause();
+        }
+    }
+
+    @Test
+    public void checkCompassMultipleResume() {
+        try(Compass compass = new Compass(ApplicationProvider.getApplicationContext())){
+            compass.resume();
+            compass.resume();
+        }
+    }
+
 }

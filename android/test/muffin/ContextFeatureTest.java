@@ -25,14 +25,13 @@ import java.util.concurrent.Executors;
  * @link https://developer.android.com/training/testing/unit-testing/local-unit-tests#java
  * @link https://www.baeldung.com/junit-5
  */
-public class NativeTest {
+public class ContextFeatureTest {
     @Rule
     public GrantPermissionRule writeStorage =
             GrantPermissionRule.grant(Manifest.permission.WRITE_EXTERNAL_STORAGE);
     @Rule
     public GrantPermissionRule readStorage =
             GrantPermissionRule.grant(Manifest.permission.READ_EXTERNAL_STORAGE);
-
 
     @Test
     public void checkExecutor() {
@@ -41,6 +40,15 @@ public class NativeTest {
 
         Executor executor =  context.getMainExecutor();
         Assertions.assertNotNull(executor);
+    }
+
+    @Test
+    public void checkMainLooper() {
+        Context context = ApplicationProvider.getApplicationContext();
+        Assertions.assertNotNull(context);
+
+        Looper looper = context.getMainLooper();
+        Assertions.assertNotNull(looper);
     }
 
     @Test
