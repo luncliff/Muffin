@@ -39,18 +39,33 @@ public class CompassTest {
     }
 
     @Test
-    public void checkCompassMultiplePause() {
+    public void tryMultiplePause() {
         try(Compass compass = new Compass(ApplicationProvider.getApplicationContext())){
             compass.pause();
             compass.pause();
         }
     }
+    @Test
+    public void tryUpdateWhenPaused() {
+        try(Compass compass = new Compass(ApplicationProvider.getApplicationContext())){
+            compass.pause();
+            compass.update();
+        }
+    }
 
     @Test
-    public void checkCompassMultipleResume() {
+    public void tryMultipleResume() {
         try(Compass compass = new Compass(ApplicationProvider.getApplicationContext())){
             compass.resume();
             compass.resume();
+        }
+    }
+    @Test
+    public void tryUpdateWhenResumed() throws Exception {
+        try(Compass compass = new Compass(ApplicationProvider.getApplicationContext())){
+            compass.resume();
+            Thread.sleep(30); // give some time to sendsors
+            compass.update();
         }
     }
 

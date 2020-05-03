@@ -114,43 +114,66 @@ class compass_t : public sensor_owner_t {
         return 0;
     }
 
+    /**
+     * @see https://developer.android.com/reference/android/hardware/SensorEvent
+     * @see https://developer.android.com/guide/topics/sensors/sensors_motion
+     */
     void consume(const ASensorEvent* events, size_t count) noexcept {
         constexpr auto alpha = 0.173205f;
+        for (auto i = 0u; i < count; ++i) {
+            const auto& e = events[i];
+            switch (e.type) {
+            case ASENSOR_TYPE_ACCELEROMETER: // m/s2
+                // e.acceleration;
+            case ASENSOR_TYPE_GYROSCOPE: // m/s2
+                // e.data[0...2];
+            case ASENSOR_TYPE_GRAVITY: // m/s2
+            default:
+                break;
+            }
+            __android_log_print(ANDROID_LOG_WARN, "[muffin]", //
+                                "event discard: type %d", e.type);
+        }
     }
 
     uint32_t update() noexcept {
         switch (auto ec = ALooper_pollAll(0, nullptr, nullptr, nullptr)) {
         case ALOOPER_POLL_WAKE:
         case ALOOPER_POLL_CALLBACK:
-        case ALOOPER_POLL_TIMEOUT:
         case ALOOPER_POLL_ERROR:
+            __android_log_print(ANDROID_LOG_WARN, "[muffin]",
+                                "ALooper_pollAll: error %d", ec);
             return static_cast<uint32_t>(-ec);
+        case ALOOPER_POLL_TIMEOUT:
+            return 0;
         default:
             break; // good to update
         };
-        constexpr auto capacity = 1000 / sizeof(ASensorEvent);
+        constexpr auto capacity = 1000 / sizeof(ASensorEvent); // nearly 10
         std::array<ASensorEvent, capacity> events{};
         const auto count = ASensorEventQueue_getEvents(queue, //
                                                        events.data(), capacity);
         if (count < 0) {
             return static_cast<uint32_t>(-count); // == error code
         }
-        consume(events.data(), static_cast<size_t>(count));
+        __android_log_print(ANDROID_LOG_DEBUG, "[muffin]",
+                            "ASensorEventQueue_getEvents: count %d", count);
+        const auto b = events.data();
+        consume(b, static_cast<size_t>(count));
+        memset(b + count, 0, sizeof(ASensorEvent) * (capacity - count));
         return 0;
     }
 };
 
-void get_field(JNIEnv* env,                    //
-               const char* t, jobject _object, //
-               const char* f, jlong& ref) {
+void get_field(JNIEnv* env, //
+               const char* t, jobject _object, const char* f, jlong& ref) {
     const jclass _type = env->FindClass(t);
     const jfieldID _field = env->GetFieldID(_type, f, "J"); // long
     ref = env->GetLongField(_object, _field);
 }
 
-void set_field(JNIEnv* env,                    //
-               const char* t, jobject _object, //
-               const char* f, jlong value) {
+void set_field(JNIEnv* env, //
+               const char* t, jobject _object, const char* f, jlong value) {
     const jclass _type = env->FindClass(t);
     const jfieldID _field = env->GetFieldID(_type, f, "J"); // long
     env->SetLongField(_object, _field, value);
