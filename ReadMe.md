@@ -1,6 +1,6 @@
 # Muffin
 
-[![Build Status](https://dev.azure.com/luncliff/personal/_apis/build/status/luncliff.Muffin)](https://dev.azure.com/luncliff/personal/_build/latest?definitionId=2) [![Build Status](https://travis-ci.org/luncliff/Muffin.svg?branch=master)](https://travis-ci.org/luncliff/Muffin)
+[![Build Status](https://dev.azure.com/luncliff/personal/_apis/build/status/luncliff.Muffin?branchName=master)](https://dev.azure.com/luncliff/personal/_build/latest?definitionId=34&branchName=master)
 
 Template for Android NDK module
 
@@ -21,7 +21,7 @@ The build step uses [Gradle 5.x](https://gradle.org/). If you don't know how to 
 ```console
 $ git clone https://github.com/luncliff/Muffin
 $ cd ./Muffin
-$ gradle assemble
+$ gradle assemble build
 ```
 
 ### Test

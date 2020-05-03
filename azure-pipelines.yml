@@ -1,3 +1,7 @@
+#
+#   Author: luncliff@gmail.com
+#
+
 trigger:
   branches:
     exclude:
@@ -15,8 +19,9 @@ jobs:
       - task: CmdLine@2
         inputs:
           script: |
+            brew install ninja
             brew info cmake
-        displayName: "Homebrew (CMake)"
+        displayName: "Homebrew"
 
       - task: CmdLine@2
         inputs:
@@ -30,4 +35,4 @@ jobs:
           workingDirectory: ""
           gradleWrapperFile: "gradlew"
           gradleOptions: "-Xmx3072m"
-          tasks: "assemble"
+          tasks: "build"

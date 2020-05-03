@@ -2,7 +2,7 @@
 #  Author
 #      luncliff@gmail.com
 #
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.10)
 project(muffin LANGUAGES CXX VERSION 1.1)
 
 if(NOT ANDROID)
