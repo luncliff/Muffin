@@ -1,6 +1,9 @@
 //
 //  Author:  github.com/luncliff (luncliff@gmail.com)
 //
+//  To Do:
+//  - https://developer.android.com/studio/build/maven-publish-plugin?hl=en
+//
 import java.nio.file.Paths
 
 println "${project.buildDir}"
@@ -11,8 +14,10 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.0.0'
-        classpath 'de.mannodermaus.gradle.plugins:android-junit5:1.6+'
+        // https://developer.android.com/studio/releases/gradle-plugin#4-0-0
+        // todo: support 4.1.0 when released
+        classpath 'com.android.tools.build:gradle:4.0.1' // requires Gradle 6.1.1+
+        classpath 'de.mannodermaus.gradle.plugins:android-junit5:1.6.0+'
     }
 }
 repositories {
@@ -24,10 +29,11 @@ apply plugin: 'com.android.library'
 android {
     compileSdkVersion 28
     compileOptions {
+        coreLibraryDesugaringEnabled true
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-    android.ndkVersion '21.3.6528147'
+    ndkVersion '21.3.6528147'
     splits {
         abi {
             enable true
@@ -37,14 +43,13 @@ android {
         }
     }
     defaultConfig {
-        versionCode         5
-        versionName         '1.1.0'
         minSdkVersion       28
         targetSdkVersion    28
-
+        versionName         '1.1.1'
+        versionCode         6
         externalNativeBuild {
             cmake {
-                cppFlags    '-Wall -Wextra'
+                cppFlags    '-Wall', '-Wextra'
                 arguments   '-DANDROID_STL=c++_shared'
                 arguments   '-DBUILD_SHARED_LIBS=true'
                 targets     'muffin'
@@ -54,14 +59,12 @@ android {
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         testInstrumentationRunnerArgument 'runnerBuilder', 'de.mannodermaus.junit5.AndroidJUnit5Builder'
     }
-
     externalNativeBuild {
         cmake {
             version '3.10.2+'
             path    'CMakeLists.txt'
         }
     }
-
     sourceSets {
         main.setRoot('android')
         main {
@@ -72,10 +75,19 @@ android {
             java.srcDir 'android/test'
             assets.srcDir 'android/test/assets'
         }
-        main.jniLibs.srcDirs = ['android/jniLibs']
-        androidTest.jniLibs.srcDirs = ['android/jniLibs']
+        // https://developer.android.com/studio/releases/gradle-plugin#cmake-imported-targets
+        // main.jniLibs.srcDirs = ['android/jniLibs']
+        // androidTest.jniLibs.srcDirs = ['android/jniLibs']
     }
-
+    buildFeatures {
+        buildConfig = true
+        // prefabPublishing true
+    }
+    // prefab {
+    //     muffin {
+    //         headers "include"
+    //     }
+    // }
     packagingOptions {
         // pickFirst 'android/jniLibs/**/*.so'
         exclude 'META-INF/LICENSE*' // JUnit 5 will bundle in files
@@ -94,18 +106,18 @@ android {
             }
         }
     }
-    ndkVersion '21.3.6528147'
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.0.10'
 
-    androidTestImplementation 'androidx.test:rules:1.2+'
-    androidTestImplementation 'androidx.test:runner:1.2+'
-    androidTestImplementation 'de.mannodermaus.junit5:android-test-core:1.2+'
-    androidTestRuntimeOnly 'de.mannodermaus.junit5:android-test-runner:1.2+'
+    androidTestImplementation 'androidx.test:rules:1.2.0+'
+    androidTestImplementation 'androidx.test:runner:1.2.0+'
+    androidTestImplementation 'de.mannodermaus.junit5:android-test-core:1.2.0+'
+    androidTestRuntimeOnly 'de.mannodermaus.junit5:android-test-runner:1.2.0+'
 
-    androidTestImplementation 'org.junit.jupiter:junit-jupiter-api:5.3+'
-    androidTestImplementation 'org.junit.jupiter:junit-jupiter-params:5.3+'
-    androidTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.3+'
+    androidTestImplementation 'org.junit.jupiter:junit-jupiter-api:5.3.0+'
+    androidTestImplementation 'org.junit.jupiter:junit-jupiter-params:5.3.0+'
+    androidTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.3.0+'
 }

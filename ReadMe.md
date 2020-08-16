@@ -12,12 +12,15 @@ Template for Android NDK module
 * [Android Developer Guide](https://developer.android.com/guide)
   * [Testing](https://developer.android.com/training/testing/unit-testing)
 * [Testing with JUnit 5 for Android](https://github.com/mannodermaus/android-junit5)
+* https://developer.android.com/studio/projects/gradle-external-native-builds
+  * https://developer.android.com/studio/build/native-dependencies?hl=en
+  * https://google.github.io/prefab/
 
 ## How to
 
 ### Build
 
-The build step uses [Gradle 5.x](https://gradle.org/). If you don't know how to use it, latest [Android Studio](https://developer.android.com/studio/) can do the work.   
+The build step uses [Gradle 6.1.1+](https://gradle.org/). If you don't know how to use it, latest [Android Studio](https://developer.android.com/studio/) can do the work.   
 
 ```console
 $ git clone https://github.com/luncliff/Muffin

@@ -3,7 +3,7 @@
 #      luncliff@gmail.com
 #
 cmake_minimum_required(VERSION 3.10)
-project(muffin LANGUAGES CXX VERSION 1.1)
+project(muffin LANGUAGES CXX VERSION 1.1.1)
 
 if(NOT ANDROID)
     message(FATAL_ERROR "requires CMAKE_TOOLCHAIN_FILE=android.toolchain.cmake")
@@ -14,17 +14,19 @@ if(NOT DEFINED BUILD_SHARED_LIBS)
     set(BUILD_SHARED_LIBS true) 
 endif()
 
+# https://developer.android.com/studio/build/native-dependencies?hl=en
 # list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 message(STATUS "${PROJECT_NAME}:")
 message(STATUS " - version: ${PROJECT_VERSION}")
 message(STATUS " - project_dir: ${PROJECT_SOURCE_DIR}")
-message(STATUS " - cmake:")
-message(STATUS "   - version:   ${CMAKE_VERSION}")
-message(STATUS "   - toolchain: ${CMAKE_TOOLCHAIN_FILE}")
-message(STATUS " - compiler:")
-message(STATUS "   - id: ${CMAKE_CXX_COMPILER_ID}")
-message(STATUS "   - version: ${CMAKE_CXX_COMPILER_VERSION}")
-message(STATUS "   - path: ${CMAKE_CXX_COMPILER}")
+message(STATUS "cmake:")
+message(STATUS " - version:   ${CMAKE_VERSION}")
+message(STATUS " - toolchain: ${CMAKE_TOOLCHAIN_FILE}")
+message(STATUS " - find_root_path: ${CMAKE_FIND_ROOT_PATH}") 
+message(STATUS "compiler:")
+message(STATUS " - id: ${CMAKE_CXX_COMPILER_ID}")
+message(STATUS " - version: ${CMAKE_CXX_COMPILER_VERSION}")
+message(STATUS " - path: ${CMAKE_CXX_COMPILER}")
 message(STATUS "Android:")
 message(STATUS "  - platform:  ${ANDROID_PLATFORM}")  #
 message(STATUS "  - arch_name: ${ANDROID_ARCH_NAME}") # 
@@ -44,6 +46,7 @@ add_library(muffin
 # https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html#cross-compiling-for-android-with-the-ndk
 set_target_properties(muffin
 PROPERTIES
+    PUBLIC_HEADER   include/muffin.h
     ANDROID_API_MIN 28
 )
 
@@ -161,3 +164,27 @@ else()
         -O3
     )
 endif()
+
+install(FILES           muffin.h
+        DESTINATION     ${CMAKE_INSTALL_PREFIX}/include
+)
+install(TARGETS         muffin
+        EXPORT          ${PROJECT_NAME}-config
+        RUNTIME         DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+        LIBRARY         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+        ARCHIVE         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+        PUBLIC_HEADER   DESTINATION ${CMAKE_INSTALL_PREFIX}/include
+)
+install(EXPORT      ${PROJECT_NAME}-config
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}
+)
+
+include(CMakePackageConfigHelpers)
+set(VERSION_FILE_PATH   ${CMAKE_BINARY_DIR}/cmake/${PROJECT_NAME}-config-version.cmake)
+write_basic_package_version_file(${VERSION_FILE_PATH}
+    VERSION             ${PROJECT_VERSION}
+    COMPATIBILITY       SameMajorVersion
+)
+install(FILES           ${VERSION_FILE_PATH} 
+        DESTINATION     ${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}
+)
