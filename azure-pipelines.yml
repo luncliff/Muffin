@@ -35,4 +35,11 @@ jobs:
           workingDirectory: ""
           gradleWrapperFile: "gradlew"
           gradleOptions: "-Xmx3072m"
-          tasks: "build"
+          tasks: "clean"
+
+      - task: Gradle@2
+        inputs:
+          workingDirectory: ""
+          gradleWrapperFile: "gradlew"
+          gradleOptions: "-Xmx3072m"
+          tasks: "assemble"

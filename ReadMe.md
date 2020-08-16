@@ -1,6 +1,6 @@
 # Muffin
 
-[![Build Status](https://dev.azure.com/luncliff/personal/_apis/build/status/luncliff.Muffin?branchName=master)](https://dev.azure.com/luncliff/personal/_build/latest?definitionId=34&branchName=master)
+[![Build Status](https://dev.azure.com/luncliff/personal/_apis/build/status/luncliff.Muffin?branchName=master)](https://dev.azure.com/luncliff/personal/_build/latest?definitionId=34&branchName=master) [![Build Status](https://travis-ci.org/luncliff/Muffin.svg?branch=master)](https://travis-ci.org/luncliff/Muffin)
 
 Template for Android NDK module
 
@@ -8,6 +8,7 @@ Template for Android NDK module
 
 ### References
 
+* [NDK Samples(GitHub)](https://github.com/android/ndk-samples)
 * [Android Developer Guide](https://developer.android.com/guide)
   * [Testing](https://developer.android.com/training/testing/unit-testing)
 * [Testing with JUnit 5 for Android](https://github.com/mannodermaus/android-junit5)

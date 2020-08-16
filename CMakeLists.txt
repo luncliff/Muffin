@@ -14,8 +14,23 @@ if(NOT DEFINED BUILD_SHARED_LIBS)
     set(BUILD_SHARED_LIBS true) 
 endif()
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-include(report-project-info)
+# list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+message(STATUS "${PROJECT_NAME}:")
+message(STATUS " - version: ${PROJECT_VERSION}")
+message(STATUS " - project_dir: ${PROJECT_SOURCE_DIR}")
+message(STATUS " - cmake:")
+message(STATUS "   - version:   ${CMAKE_VERSION}")
+message(STATUS "   - toolchain: ${CMAKE_TOOLCHAIN_FILE}")
+message(STATUS " - compiler")
+message(STATUS "   - id: ${CMAKE_CXX_COMPILER_ID}")
+message(STATUS "   - version: ${CMAKE_CXX_COMPILER_VERSION}")
+message(STATUS "   - path: ${CMAKE_CXX_COMPILER}")
+message(STATUS "Android:")
+message(STATUS "  - platform:  ${ANDROID_PLATFORM}")  #
+message(STATUS "  - arch_name: ${ANDROID_ARCH_NAME}") # 
+message(STATUS "  - abi: ${ANDROID_ABI}") # arm64-v8a 
+message(STATUS "  - ndk: ${ANDROID_NDK}") # Path/to/NDK
+message(STATUS "  - stl: ${ANDROID_STL}") # c++_shared
 
 add_library(muffin
     include/muffin.h
@@ -29,7 +44,6 @@ add_library(muffin
 # https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html#cross-compiling-for-android-with-the-ndk
 set_target_properties(muffin
 PROPERTIES
-    CXX_STANDARD    17
     ANDROID_API_MIN 28
 )
 
@@ -42,8 +56,9 @@ PRIVATE
 
 target_link_libraries(muffin
 PRIVATE
-    ${CMAKE_DL_LIBS} ${ANDROID_STL}
-    android log m camera2ndk mediandk GLESv2 # vulkan
+    ${CMAKE_DL_LIBS} ${ANDROID_STL} m 
+    android log camera2ndk mediandk
+    vulkan
 )
 
 # path for <asm/types.h>
@@ -132,6 +147,7 @@ PRIVATE
 target_compile_options(muffin
 PRIVATE
     -fvisibility=default -ferror-limit=4
+    -std=c++2a -stdlib=libc++
 )
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)

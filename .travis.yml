@@ -1,0 +1,49 @@
+git:
+  submodules: false
+  depth: 3
+
+notifications:
+  email:
+    - luncliff@gmail.com
+  
+os: linux
+dist: xenial
+addons:
+  apt:
+    update: true
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - tree
+      - ninja-build
+      - cmake
+      - curl
+
+language: android
+android:
+  components: # Android SDK Manager
+    - tools
+    - platform-tools
+    - android-28
+    - build-tools-28.0.3
+  licenses:
+    - 'android-sdk-license-.+'
+    - 'google-gdk-license-.+'
+
+install:
+  # Gradle
+  - curl -s "https://get.sdkman.io" | bash > /dev/null
+  - source "$HOME/.sdkman/bin/sdkman-init.sh"
+  - sdk version
+  - sdk install gradle
+  - echo y | sdkmanager "ndk;21.3.6528147"
+
+script:
+  - gradle clean
+  - gradle assembleDebug
+  - gradle assembleRelease
+  - gradle assemble
+
+after_success:
+  - tree ./build/intermediate/cmake/debug/obj
+  - tree ./build/intermediate/cmake/release/obj

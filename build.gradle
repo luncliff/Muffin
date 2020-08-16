@@ -3,13 +3,15 @@
 //
 import java.nio.file.Paths
 
-buildscript {    
+println "${project.buildDir}"
+
+buildscript {
     repositories {
         google()
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.5+'
+        classpath 'com.android.tools.build:gradle:4.0.0'
         classpath 'de.mannodermaus.gradle.plugins:android-junit5:1.6+'
     }
 }
@@ -25,12 +27,13 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    android.ndkVersion '21.3.6528147'
     splits {
         abi {
             enable true
             universalApk true 
             reset()
-            include 'armeabi-v7a',  'arm64-v8a', 'x86_64'
+            include 'armeabi-v7a', 'arm64-v8a', 'x86_64'
         }
     }
     defaultConfig {
@@ -43,6 +46,8 @@ android {
             cmake {
                 cppFlags    '-Wall -Wextra'
                 arguments   '-DANDROID_STL=c++_shared'
+                arguments   '-DBUILD_SHARED_LIBS=true'
+                targets     'muffin'
             }
         }
         // https://github.com/mannodermaus/android-junit5
@@ -78,7 +83,6 @@ android {
     // https://developer.android.com/training/testing/unit-testing/instrumented-unit-tests
     testOptions {
         unitTests.returnDefaultValues = true
-
         unitTests.all {
             testLogging {
                 events 'passed', 'skipped', 'failed'
@@ -89,11 +93,12 @@ android {
                 exceptionFormat = 'full'
             }
         }
-    } 
+    }
+    ndkVersion '21.3.6528147'
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
 
     androidTestImplementation 'androidx.test:rules:1.2+'
     androidTestImplementation 'androidx.test:runner:1.2+'
