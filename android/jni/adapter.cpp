@@ -3,12 +3,14 @@
  * @author  github.com/luncliff (luncliff@gmail.com)
  */
 #include "adapter.h"
-
 #include <array>
 #include <cerrno>
 #define SPDLOG_FMT_EXTERNAL
-#include <spdlog/spdlog.h>
 #include <spdlog/sinks/android_sink.h>
+#include <spdlog/spdlog.h>
+
+using namespace std::string_literals;
+using namespace std::string_view_literals;
 
 extern "C" jint JNI_OnLoad(JavaVM* vm, void*) {
     constexpr auto version = JNI_VERSION_1_6;
@@ -17,10 +19,11 @@ extern "C" jint JNI_OnLoad(JavaVM* vm, void*) {
     if (vm->GetEnv((void**)&env, version) != JNI_OK) {
         return result;
     }
-
     auto stream = spdlog::android_logger_st("android", "muffin");
     stream->set_level(spdlog::level::debug);
     spdlog::set_default_logger(stream);
+    // Logcat will report time, thread, and level. just print message without decoration
+    spdlog::set_pattern("%v");
     return version;
 }
 
@@ -45,8 +48,10 @@ class sensor_owner_t {
         ALooper_acquire(looper);
         // sensors[0...count]
         count = ASensorManager_getSensorList(manager, &sensors);
-        __android_log_print(ANDROID_LOG_INFO, "[muffin]", //
-                            "sensor count: %u", get_count());
+        spdlog::info("sensor:"sv);
+        for (int i = 0; i < count; i++) {
+            spdlog::info(" - {}"sv, ASensor_getName(sensors[i]));
+        }
     }
     ~sensor_owner_t() noexcept {
         ALooper_release(looper);
@@ -70,8 +75,8 @@ class compass_t : public sensor_owner_t {
         auto* looper = ALooper_forThread();
         if (looper == nullptr) {
             looper = ALooper_prepare(ALOOPER_PREPARE_ALLOW_NON_CALLBACKS);
-            __android_log_print(ANDROID_LOG_INFO, "[muffin]", //
-                                "created looper: %p", looper);
+            spdlog::info("created looper: {:p}"sv,
+                         reinterpret_cast<void*>(looper));
         }
         return looper;
     }
@@ -90,8 +95,7 @@ class compass_t : public sensor_owner_t {
     }
     ~compass_t() noexcept {
         if (auto ec = ASensorManager_destroyEventQueue(manager, queue))
-            __android_log_print(ANDROID_LOG_WARN, "[muffin]",
-                                "ASensorManager_destroyEventQueue: %d", ec);
+            spdlog::warn("ASensorManager_destroyEventQueue: {}"sv, ec);
     }
 
     /// @todo error code identification
@@ -126,7 +130,7 @@ class compass_t : public sensor_owner_t {
      * @see https://developer.android.com/guide/topics/sensors/sensors_motion
      */
     void consume(const ASensorEvent* events, size_t count) noexcept {
-        constexpr auto alpha = 0.173205f;
+        // constexpr auto alpha = 0.173205f;
         for (auto i = 0u; i < count; ++i) {
             const auto& e = events[i];
             switch (e.type) {
@@ -138,8 +142,7 @@ class compass_t : public sensor_owner_t {
             default:
                 break;
             }
-            __android_log_print(ANDROID_LOG_WARN, "[muffin]", //
-                                "event discard: type %d", e.type);
+            spdlog::warn("event discard: type %d"sv, e.type);
         }
     }
 
@@ -148,8 +151,7 @@ class compass_t : public sensor_owner_t {
         case ALOOPER_POLL_WAKE:
         case ALOOPER_POLL_CALLBACK:
         case ALOOPER_POLL_ERROR:
-            __android_log_print(ANDROID_LOG_WARN, "[muffin]",
-                                "ALooper_pollAll: error %d", ec);
+            spdlog::warn("ALooper_pollAll: error {}"sv, ec);
             return static_cast<uint32_t>(-ec);
         case ALOOPER_POLL_TIMEOUT:
             return 0;
@@ -163,8 +165,7 @@ class compass_t : public sensor_owner_t {
         if (count < 0) {
             return static_cast<uint32_t>(-count); // == error code
         }
-        __android_log_print(ANDROID_LOG_DEBUG, "[muffin]",
-                            "ASensorEventQueue_getEvents: count %d", count);
+        spdlog::debug("ASensorEventQueue_getEvents: count {}"sv, count);
         const auto b = events.data();
         consume(b, static_cast<size_t>(count));
         memset(b + count, 0, sizeof(ASensorEvent) * (capacity - count));
@@ -192,27 +193,31 @@ static_assert(sizeof(void*) <= sizeof(jlong),
 extern "C" {
 
 jlong Java_muffin_Compass_create(JNIEnv* env, jclass type, jstring _id) {
+    spdlog::trace(std::string_view{__PRETTY_FUNCTION__});
     char name[60]{};
     env->GetStringUTFRegion(_id, 0, env->GetStringLength(_id), name);
-
     auto* impl = new compass_t{name};
     return reinterpret_cast<jlong>(impl);
 }
 
 void Java_muffin_Compass_destroy(JNIEnv* env, jclass type, jlong value) {
+    spdlog::trace(std::string_view{__PRETTY_FUNCTION__});
     auto* impl = reinterpret_cast<compass_t*>(value);
     delete impl;
 }
 
 jint Java_muffin_Compass_update(JNIEnv* env, jclass type, jlong value) {
+    spdlog::trace(std::string_view{__PRETTY_FUNCTION__});
     auto* impl = reinterpret_cast<compass_t*>(value);
     return impl->update();
 }
 jint Java_muffin_Compass_resume(JNIEnv* env, jclass type, jlong value) {
+    spdlog::trace(std::string_view{__PRETTY_FUNCTION__});
     auto* impl = reinterpret_cast<compass_t*>(value);
     return impl->resume();
 }
 jint Java_muffin_Compass_pause(JNIEnv* env, jclass type, jlong value) {
+    spdlog::trace(std::string_view{__PRETTY_FUNCTION__});
     auto* impl = reinterpret_cast<compass_t*>(value);
     return impl->pause();
 }
