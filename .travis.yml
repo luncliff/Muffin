@@ -16,8 +16,8 @@ addons:
     packages:
       - tree
       - ninja-build
-      - cmake
       - curl
+      - wget
 
 language: android
 android:
@@ -29,6 +29,17 @@ android:
   licenses:
     - 'android-sdk-license-.+'
     - 'google-gdk-license-.+'
+
+before_install:
+  # forced upgrade cmake
+  - sudo rm -rf /usr/local/cmake-3.9.2
+  - mkdir -p build && pushd build
+  - wget -q https://cmake.org/files/v3.18/cmake-3.18.0-Linux-x86_64.tar.gz
+  - tar -xvf ./cmake-3.18.0-Linux-x86_64.tar.gz > /dev/null
+  - sudo mv cmake-3.18.0-Linux-x86_64/bin/* /usr/bin/
+  - sudo mv cmake-3.18.0-Linux-x86_64/share/cmake-3.18 /usr/share/cmake-3.18
+  - popd
+  - cmake --version && which cmake
 
 install:
   - bash ./scripts/travis-ci.sh "ndk;21.3.6528147"
