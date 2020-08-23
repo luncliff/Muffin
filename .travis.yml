@@ -31,13 +31,12 @@ android:
     - 'google-gdk-license-.+'
 
 install:
+  - bash ./scripts/travis-ci.sh "ndk;21.3.6528147"
   # Gradle
   - curl -s "https://get.sdkman.io" | bash > /dev/null
   - source "$HOME/.sdkman/bin/sdkman-init.sh"
   - sdk version
   - sdk install gradle
-  # - echo y | sdkmanager "ndk;21.3.6528147"
-  - bash ./scripts/travis-ci.sh "ndk;21.3.6528147"
 
 script:
   - gradle clean
@@ -48,3 +47,4 @@ script:
 after_success:
   - tree ./build/intermediates/cmake/debug/obj
   - tree ./build/intermediates/cmake/release/obj
+  - tree ./build/outputs/aar

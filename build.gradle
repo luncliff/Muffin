@@ -61,7 +61,7 @@ android {
     }
     externalNativeBuild {
         cmake {
-            version '3.10.2+'
+            version '3.13.0+'
             path    'CMakeLists.txt'
         }
     }
@@ -76,7 +76,7 @@ android {
             assets.srcDir 'android/test/assets'
         }
         // https://developer.android.com/studio/releases/gradle-plugin#cmake-imported-targets
-        // main.jniLibs.srcDirs = ['android/jniLibs']
+        main.jniLibs.srcDirs = ['jniLibs']
         // androidTest.jniLibs.srcDirs = ['android/jniLibs']
     }
     buildFeatures {

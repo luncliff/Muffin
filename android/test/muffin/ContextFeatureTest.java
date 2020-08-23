@@ -37,7 +37,6 @@ public class ContextFeatureTest {
     public void checkExecutor() {
         Context context = ApplicationProvider.getApplicationContext();
         Assertions.assertNotNull(context);
-
         Executor executor =  context.getMainExecutor();
         Assertions.assertNotNull(executor);
     }
@@ -46,7 +45,6 @@ public class ContextFeatureTest {
     public void checkMainLooper() {
         Context context = ApplicationProvider.getApplicationContext();
         Assertions.assertNotNull(context);
-
         Looper looper = context.getMainLooper();
         Assertions.assertNotNull(looper);
     }
@@ -55,9 +53,7 @@ public class ContextFeatureTest {
     public void checkAssetManager() {
         Context context = ApplicationProvider.getApplicationContext();
         Assertions.assertNotNull(context);
-
-        try(AssetManager assets = context.getAssets()){
-            Assertions.assertNotNull(assets);
-        }
+        AssetManager assets = context.getAssets();
+        Assertions.assertNotNull(assets);
     }
 }

@@ -6,6 +6,9 @@
 
 #include <array>
 #include <cerrno>
+#define SPDLOG_FMT_EXTERNAL
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/android_sink.h>
 
 extern "C" jint JNI_OnLoad(JavaVM* vm, void*) {
     constexpr auto version = JNI_VERSION_1_6;
@@ -14,6 +17,10 @@ extern "C" jint JNI_OnLoad(JavaVM* vm, void*) {
     if (vm->GetEnv((void**)&env, version) != JNI_OK) {
         return result;
     }
+
+    auto stream = spdlog::android_logger_st("android", "muffin");
+    stream->set_level(spdlog::level::debug);
+    spdlog::set_default_logger(stream);
     return version;
 }
 

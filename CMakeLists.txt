@@ -2,7 +2,7 @@
 #  Author
 #      luncliff@gmail.com
 #
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.13)
 project(muffin LANGUAGES CXX VERSION 1.1.1)
 
 if(NOT ANDROID)
@@ -27,7 +27,7 @@ message(STATUS "compiler:")
 message(STATUS " - id: ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS " - version: ${CMAKE_CXX_COMPILER_VERSION}")
 message(STATUS " - path: ${CMAKE_CXX_COMPILER}")
-message(STATUS "Android:")
+message(STATUS "android:")
 message(STATUS "  - platform:  ${ANDROID_PLATFORM}")  #
 message(STATUS "  - arch_name: ${ANDROID_ARCH_NAME}") # 
 message(STATUS "  - abi: ${ANDROID_ABI}") # arm64-v8a 
@@ -47,65 +47,64 @@ add_library(muffin
 set_target_properties(muffin
 PROPERTIES
     PUBLIC_HEADER   include/muffin.h
-    ANDROID_API_MIN 28
+    # CXX_STANDARD 20
+    ANDROID_API_MIN 24
 )
 
 target_include_directories(muffin
 PRIVATE
-    ${ANDROID_NDK}/sysroot/usr/include/ 
-    ${ANDROID_NDK}/sources/android/support/include/
-    ${ANDROID_NDK}/platforms/${ANDROID_PLATFORM}/arch-${ANDROID_ARCH_NAME}/usr/include/ 
+    # ${ANDROID_NDK}/sysroot/usr/include/
+    # ${ANDROID_NDK}/sources/android/support/include/
+    # ${ANDROID_NDK}/platforms/${ANDROID_PLATFORM}/arch-${ANDROID_ARCH_NAME}/usr/include/
 )
 
 target_link_libraries(muffin
 PRIVATE
-    ${CMAKE_DL_LIBS} ${ANDROID_STL} m 
-    android log camera2ndk mediandk
-    vulkan
+    ${CMAKE_DL_LIBS} ${ANDROID_STL} m android log camera2ndk mediandk EGL GLESv3 vulkan
 )
 
 # path for <asm/types.h>
-if(ANDROID_ABI STREQUAL "arm64-v8a")
-    target_include_directories(muffin
-    PRIVATE
-        ${ANDROID_NDK}/sysroot/usr/include/aarch64-linux-android
-    )
-elseif(ANDROID_ABI MATCHES "arm")
-    target_include_directories(muffin
-    PRIVATE
-        ${ANDROID_NDK}/sysroot/usr/include/arm-linux-androideabi
-    )
-elseif(ANDROID_ABI MATCHES "x86") # x86, x86_64
-    target_include_directories(muffin
-    PRIVATE
-        ${ANDROID_NDK}/sysroot/usr/include/x86_64-linux-android
-    )
-endif()
+# if(ANDROID_ABI STREQUAL "arm64-v8a")
+#     target_include_directories(muffin
+#     PRIVATE
+#         ${ANDROID_NDK}/sysroot/usr/include/aarch64-linux-android
+#     )
+# elseif(ANDROID_ABI MATCHES "arm")
+#     target_include_directories(muffin
+#     PRIVATE
+#         ${ANDROID_NDK}/sysroot/usr/include/arm-linux-androideabi
+#     )
+# elseif(ANDROID_ABI MATCHES "x86") # x86, x86_64
+#     target_include_directories(muffin
+#     PRIVATE
+#         ${ANDROID_NDK}/sysroot/usr/include/x86_64-linux-android
+#     )
+# endif()
 
 if(ANDROID_STL STREQUAL "c++_shared")
-    target_include_directories(muffin
-    PRIVATE
-        ${ANDROID_NDK}/sources/cxx-stl/llvm-libc++/include/ 
-    )
+    # target_include_directories(muffin
+    # PRIVATE
+    #     ${ANDROID_NDK}/sources/cxx-stl/llvm-libc++/include/
+    # )
     # target_link_directories(muffin
     # PRIVATE
-    #     ${ANDROID_NDK}/sources/cxx-stl/llvm-libc++/libs/ANDROID_ABI/
+    #     ${ANDROID_NDK}/sources/cxx-stl/llvm-libc++/libs/${ANDROID_ABI}/
     # )
     target_compile_options(muffin
     PRIVATE
-        -stdlib=libc++ -std=c++2a
+        -stdlib=libc++ -std=c++20
         -fcoroutines-ts
     )
 
 elseif(ANDROID_STL STREQUAL "gnustl_shared")
     message(WARNING "recommend ANDROID_STL=c++_shared")
-    target_include_directories(muffin
-    PRIVATE
-        ${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/include/ 
-    )
+    # target_include_directories(muffin
+    # PRIVATE
+    #     ${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/include/
+    # )
     # target_link_directories(muffin
     # PRIVATE
-    #     ${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.9/libs/ANDROID_ABI/
+    #     ${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.9/libs/${ANDROID_ABI}/
     # )
 
 else()
@@ -116,7 +115,7 @@ endif()
 # PRIVATE
 #     ${ANDROID_NDK}/platforms/${ANDROID_PLATFORM}/arch-${ANDROID_ARCH_NAME}/usr/lib/    
 # PRIVATE
-#     android/jniLibs/${ANDROID_ABI}
+#     jniLibs/${ANDROID_ABI}
 # )
 
 
@@ -130,21 +129,24 @@ PRIVATE
     android/jni/adapter.cpp
 )
 
+# get_filename_component(fmt_DIR jniLibs/${ANDROID_ABI}/cmake/fmt ABSOLUTE)
+# find_package(fmt 6.2.0 CONFIG REQUIRED)
 target_include_directories(muffin
 PRIVATE
-    include    
+    include jniLibs/include
 )
-
+target_link_directories(muffin
+PRIVATE
+    jniLibs/${ANDROID_ABI}
+)
 target_link_libraries(muffin
 PRIVATE
-    ${CMAKE_DL_LIBS} ${ANDROID_STL} m
-    android log camera2ndk mediandk
-    GLESv2 vulkan
+    fmt spdlog png turbojpeg jpeg
 )
-
 target_compile_definitions(muffin
 PRIVATE
     AUTHOR_LABEL="luncliff@gmail.com"
+    SPDLOG
 )
 
 target_compile_options(muffin

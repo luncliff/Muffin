@@ -20,14 +20,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class CompassTest {
-
-    @Test
-    public void checkPackageName() {
-        Context context = ApplicationProvider.getApplicationContext();
-        Assertions.assertNotNull(context);
-        Assertions.assertEquals("dev.muffin.test", context.getPackageName());
-    }
-
     @Test
     public void checkCompassHasName() {
         Context context = ApplicationProvider.getApplicationContext();
