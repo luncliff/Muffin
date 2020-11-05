@@ -4,7 +4,7 @@
  */
 #ifndef JNI_ADAPTER_H
 #define JNI_ADAPTER_H
-#include <muffin.h>
+#include <muffin.hpp>
 
 #include <android/hardware_buffer.h>
 #include <android/log.h>

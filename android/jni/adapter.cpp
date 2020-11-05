@@ -12,11 +12,11 @@
 using namespace std::string_literals;
 using namespace std::string_view_literals;
 
-extern "C" jint JNI_OnLoad(JavaVM* vm, void*) {
+extern "C" jint JNI_OnLoad(JavaVM *vm, void *) {
     constexpr auto version = JNI_VERSION_1_6;
-    JNIEnv* env{};
+    JNIEnv *env{};
     jint result = -1;
-    if (vm->GetEnv((void**)&env, version) != JNI_OK) {
+    if (vm->GetEnv((void **)&env, version) != JNI_OK) {
         return result;
     }
     auto stream = spdlog::android_logger_st("android", "muffin");
@@ -31,19 +31,19 @@ extern "C" jint JNI_OnLoad(JavaVM* vm, void*) {
  * @brief Find exception class information (type info)
  * @return java/lang/RuntimeException
  */
-jclass get_runtime_exception(JNIEnv* env) {
+jclass get_runtime_exception(JNIEnv *env) {
     return env->FindClass("java/lang/RuntimeException");
 }
 
 class sensor_owner_t {
   protected:
-    ALooper* const looper;
-    ASensorManager* const manager;
+    ALooper *const looper;
+    ASensorManager *const manager;
     ASensorList sensors = nullptr;
     int count = 0;
 
   public:
-    explicit sensor_owner_t(const char* _id, ALooper* _looper) noexcept(false)
+    explicit sensor_owner_t(const char *_id, ALooper *_looper) noexcept(false)
         : looper{_looper}, manager{ASensorManager_getInstanceForPackage(_id)} {
         ALooper_acquire(looper);
         // sensors[0...count]
@@ -53,43 +53,39 @@ class sensor_owner_t {
             spdlog::info(" - {}"sv, ASensor_getName(sensors[i]));
         }
     }
-    ~sensor_owner_t() noexcept {
-        ALooper_release(looper);
-    }
+    ~sensor_owner_t() noexcept { ALooper_release(looper); }
 
-    uint32_t get_count() const noexcept {
-        return static_cast<uint32_t>(count);
-    }
+    uint32_t get_count() const noexcept { return static_cast<uint32_t>(count); }
 };
 
 /**
  * @todo caliberate multiple sensor input
  */
 class compass_t : public sensor_owner_t {
-    ASensorEventQueue* queue;
-    const ASensor* acc;
-    const ASensor* gyro;
+    ASensorEventQueue *queue;
+    const ASensor *acc;
+    const ASensor *gyro;
 
   private:
-    static ALooper* get_looper() noexcept {
-        auto* looper = ALooper_forThread();
+    static ALooper *get_looper() noexcept {
+        auto *looper = ALooper_forThread();
         if (looper == nullptr) {
             looper = ALooper_prepare(ALOOPER_PREPARE_ALLOW_NON_CALLBACKS);
             spdlog::info("created looper: {:p}"sv,
-                         reinterpret_cast<void*>(looper));
+                         reinterpret_cast<void *>(looper));
         }
         return looper;
     }
 
   public:
-    explicit compass_t(const char* _id) noexcept(false)
+    explicit compass_t(const char *_id) noexcept(false)
         : sensor_owner_t{_id, get_looper()},
           acc{ASensorManager_getDefaultSensor(manager,
                                               ASENSOR_TYPE_ACCELEROMETER)},
           gyro{ASensorManager_getDefaultSensor(manager,
                                                ASENSOR_TYPE_GYROSCOPE)} {
         ALooper_callbackFunc callback = nullptr;
-        void* user_data = nullptr;
+        void *user_data = nullptr;
         queue = ASensorManager_createEventQueue(manager, looper, 0xAAAA,
                                                 callback, user_data);
     }
@@ -129,10 +125,10 @@ class compass_t : public sensor_owner_t {
      * @see https://developer.android.com/reference/android/hardware/SensorEvent
      * @see https://developer.android.com/guide/topics/sensors/sensors_motion
      */
-    void consume(const ASensorEvent* events, size_t count) noexcept {
+    void consume(const ASensorEvent *events, size_t count) noexcept {
         // constexpr auto alpha = 0.173205f;
         for (auto i = 0u; i < count; ++i) {
-            const auto& e = events[i];
+            const auto &e = events[i];
             switch (e.type) {
             case ASENSOR_TYPE_ACCELEROMETER: // m/s2
                 // e.acceleration;
@@ -173,56 +169,56 @@ class compass_t : public sensor_owner_t {
     }
 };
 
-void get_field(JNIEnv* env, //
-               const char* t, jobject _object, const char* f, jlong& ref) {
+void get_field(JNIEnv *env, //
+               const char *t, jobject _object, const char *f, jlong &ref) {
     const jclass _type = env->FindClass(t);
     const jfieldID _field = env->GetFieldID(_type, f, "J"); // long
     ref = env->GetLongField(_object, _field);
 }
 
-void set_field(JNIEnv* env, //
-               const char* t, jobject _object, const char* f, jlong value) {
+void set_field(JNIEnv *env, //
+               const char *t, jobject _object, const char *f, jlong value) {
     const jclass _type = env->FindClass(t);
     const jfieldID _field = env->GetFieldID(_type, f, "J"); // long
     env->SetLongField(_object, _field, value);
 }
 
-static_assert(sizeof(void*) <= sizeof(jlong),
+static_assert(sizeof(void *) <= sizeof(jlong),
               "`jlong` must be able to contain `void*` pointer");
 
 extern "C" {
 
-jlong Java_muffin_Compass_create(JNIEnv* env, jclass type, jstring _id) {
+jlong Java_muffin_Compass_create(JNIEnv *env, jclass type, jstring _id) {
     spdlog::trace(std::string_view{__PRETTY_FUNCTION__});
     char name[60]{};
     env->GetStringUTFRegion(_id, 0, env->GetStringLength(_id), name);
-    auto* impl = new compass_t{name};
+    auto *impl = new compass_t{name};
     return reinterpret_cast<jlong>(impl);
 }
 
-void Java_muffin_Compass_destroy(JNIEnv* env, jclass type, jlong value) {
+void Java_muffin_Compass_destroy(JNIEnv *env, jclass type, jlong value) {
     spdlog::trace(std::string_view{__PRETTY_FUNCTION__});
-    auto* impl = reinterpret_cast<compass_t*>(value);
+    auto *impl = reinterpret_cast<compass_t *>(value);
     delete impl;
 }
 
-jint Java_muffin_Compass_update(JNIEnv* env, jclass type, jlong value) {
+jint Java_muffin_Compass_update(JNIEnv *env, jclass type, jlong value) {
     spdlog::trace(std::string_view{__PRETTY_FUNCTION__});
-    auto* impl = reinterpret_cast<compass_t*>(value);
+    auto *impl = reinterpret_cast<compass_t *>(value);
     return impl->update();
 }
-jint Java_muffin_Compass_resume(JNIEnv* env, jclass type, jlong value) {
+jint Java_muffin_Compass_resume(JNIEnv *env, jclass type, jlong value) {
     spdlog::trace(std::string_view{__PRETTY_FUNCTION__});
-    auto* impl = reinterpret_cast<compass_t*>(value);
+    auto *impl = reinterpret_cast<compass_t *>(value);
     return impl->resume();
 }
-jint Java_muffin_Compass_pause(JNIEnv* env, jclass type, jlong value) {
+jint Java_muffin_Compass_pause(JNIEnv *env, jclass type, jlong value) {
     spdlog::trace(std::string_view{__PRETTY_FUNCTION__});
-    auto* impl = reinterpret_cast<compass_t*>(value);
+    auto *impl = reinterpret_cast<compass_t *>(value);
     return impl->pause();
 }
 
-jstring Java_muffin_Compass_getName(JNIEnv* env, jobject _object) {
+jstring Java_muffin_Compass_getName(JNIEnv *env, jobject _object) {
     jlong value = 0;
     get_field(env, "muffin/Compass", _object, "impl", value);
     char buf[20]{};

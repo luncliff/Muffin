@@ -14,6 +14,9 @@ if(NOT DEFINED BUILD_SHARED_LIBS)
     set(BUILD_SHARED_LIBS true) 
 endif()
 
+include(CheckIncludeFileCXX)
+check_include_file_cxx("vulkan/vulkan.h" found_vulkan)
+
 # https://developer.android.com/studio/build/native-dependencies?hl=en
 # list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 message(STATUS "${PROJECT_NAME}:")
@@ -35,7 +38,7 @@ message(STATUS "  - ndk: ${ANDROID_NDK}") # Path/to/NDK
 message(STATUS "  - stl: ${ANDROID_STL}") # c++_shared
 
 add_library(muffin
-    include/muffin.h
+    include/muffin.hpp
     src/libmain.cpp
 )
 
@@ -46,7 +49,7 @@ add_library(muffin
 # https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html#cross-compiling-for-android-with-the-ndk
 set_target_properties(muffin
 PROPERTIES
-    PUBLIC_HEADER   include/muffin.h
+    PUBLIC_HEADER   include/muffin.hpp
     # CXX_STANDARD 20
     ANDROID_API_MIN 24
 )
@@ -146,7 +149,6 @@ PRIVATE
 target_compile_definitions(muffin
 PRIVATE
     AUTHOR_LABEL="luncliff@gmail.com"
-    SPDLOG
 )
 
 target_compile_options(muffin
@@ -160,6 +162,38 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
     PRIVATE
         -g -O0
     )
+
+    # https://developer.android.com/ndk/guides/asan
+    # https://github.com/google/sanitizers/wiki/AddressSanitizer
+    # https://source.android.com/devices/tech/debug/sanitizers
+    if(ANDROID_PLATFORM_LEVEL GREATER 26 AND ANDROID_ARCH_NAME MATCHES "arm")
+        message(STATUS "using sanitizers: ${ANDROID_PLATFORM} ${ANDROID_ABI} ${ANDROID_ARCH_NAME}")
+        target_compile_options(muffin
+        INTERFACE
+            -fno-omit-frame-pointer
+            -fsanitize=address      # https://clang.llvm.org/docs/AddressSanitizer.html#limitations
+            -fsanitize=undefined    # https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html#available-checks
+        )
+        if(ANDROID_ABI STREQUAL armeabi-v7a)
+            set(san_arch arm)
+        elseif(ANDROID_ABI STREQUAL arm64-v8a)
+            set(san_arch aarch64)
+        elseif(ANDROID_ABI STREQUAL x86)
+            set(san_arch i686)
+        elseif(ANDROID_ABI STREQUAL x86_64)
+            set(san_arch x86_64)
+        endif()
+        # replaces `target_link_directories` for CMake 3.13+
+        set(san_pattern "clang_rt.*-${san_arch}-android")
+        file(GLOB sanitizers 
+            ${internal_dir}/libs/${ANDROID_ABI}/lib${san_pattern}.so)
+        target_link_libraries(muffin
+        INTERFACE
+            ${sanitizers}   # clang_rt.asan-${san_arch}-android
+                            # clang_rt.ubsan_minimal-${san_arch}-android
+        )
+    endif()
+
 else()
     target_compile_options(muffin
     PRIVATE
@@ -167,9 +201,6 @@ else()
     )
 endif()
 
-install(FILES           muffin.h
-        DESTINATION     ${CMAKE_INSTALL_PREFIX}/include
-)
 install(TARGETS         muffin
         EXPORT          ${PROJECT_NAME}-config
         RUNTIME         DESTINATION ${CMAKE_INSTALL_PREFIX}/bin

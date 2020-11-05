@@ -1,4 +1,4 @@
-#include <muffin.h>
+#include <muffin.hpp>
 
 #include <fmt/format.h>
 #define SPDLOG_FMT_EXTERNAL

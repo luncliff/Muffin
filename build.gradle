@@ -15,8 +15,7 @@ buildscript {
     }
     dependencies {
         // https://developer.android.com/studio/releases/gradle-plugin#4-0-0
-        // todo: support 4.1.0 when released
-        classpath 'com.android.tools.build:gradle:4.0.1' // requires Gradle 6.1.1+
+        classpath 'com.android.tools.build:gradle:4.1.0' // requires Gradle 6.5+
         classpath 'de.mannodermaus.gradle.plugins:android-junit5:1.6.0+'
     }
 }
@@ -34,6 +33,8 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
     ndkVersion '21.3.6528147'
+
+    // https://developer.android.com/studio/build/configure-apk-splits#configure-abi-split
     splits {
         abi {
             enable true
@@ -77,17 +78,18 @@ android {
         }
         // https://developer.android.com/studio/releases/gradle-plugin#cmake-imported-targets
         main.jniLibs.srcDirs = ['jniLibs']
-        // androidTest.jniLibs.srcDirs = ['android/jniLibs']
+        androidTest.jniLibs.srcDirs = ['android/jniLibs']
     }
     buildFeatures {
         buildConfig = true
-        // prefabPublishing true
+        prefab true
+        prefabPublishing true
     }
-    // prefab {
-    //     muffin {
-    //         headers "include"
-    //     }
-    // }
+    prefab {
+        muffin {
+            headers "include"
+        }
+    }
     packagingOptions {
         // pickFirst 'android/jniLibs/**/*.so'
         exclude 'META-INF/LICENSE*' // JUnit 5 will bundle in files

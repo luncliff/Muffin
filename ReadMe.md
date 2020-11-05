@@ -18,6 +18,18 @@ Template for Android NDK module
 
 ## How to
 
+### Setup
+
+#### NDK Sanitizers
+
+```bash
+cd ${ANDROID_NDK_HOME}/build/tools
+    INSTALL_PATH=/tmp/llvm/prebuilt/"$(echo $(uname -s)-$(uname -m) | tr '[:upper:]' '[:lower:]')"
+    ./make_standalone_toolchain.py --arch=arm64 --api=27 --stl=libc++ --install-dir=${INSTALL_PATH} --force
+cd ${INSTALL_PATH}
+    tree -L 2 ./lib64/clang/9.0.0/lib
+```
+
 ### Build
 
 The build step uses [Gradle 6.1.1+](https://gradle.org/). If you don't know how to use it, latest [Android Studio](https://developer.android.com/studio/) can do the work.   
