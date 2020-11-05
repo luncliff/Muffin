@@ -50,7 +50,7 @@ android {
         versionCode         6
         externalNativeBuild {
             cmake {
-                cppFlags    '-Wall', '-Wextra'
+                cppFlags    '-Wall', '-Wextra', '-fno-rtti'
                 arguments   '-DANDROID_STL=c++_shared'
                 arguments   '-DBUILD_SHARED_LIBS=true'
                 targets     'muffin'
@@ -91,7 +91,7 @@ android {
         }
     }
     packagingOptions {
-        // pickFirst 'android/jniLibs/**/*.so'
+        // pickFirst 'jniLibs/**/*.so'
         exclude 'META-INF/LICENSE*' // JUnit 5 will bundle in files
     }
     // https://developer.android.com/training/testing/unit-testing/instrumented-unit-tests

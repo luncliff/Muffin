@@ -9,6 +9,7 @@
 #include <spdlog/sinks/android_sink.h>
 #include <spdlog/spdlog.h>
 
+using namespace std::chrono_literals;
 using namespace std::string_literals;
 using namespace std::string_view_literals;
 
@@ -222,7 +223,7 @@ jstring Java_muffin_Compass_getName(JNIEnv *env, jobject _object) {
     jlong value = 0;
     get_field(env, "muffin/Compass", _object, "impl", value);
     char buf[20]{};
-    snprintf(buf, 20, "%lx", static_cast<uint64_t>(value));
+    snprintf(buf, 20, "%llx", static_cast<uint64_t>(value));
     return env->NewStringUTF(buf);
 }
 
