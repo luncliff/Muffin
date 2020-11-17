@@ -50,9 +50,8 @@ android {
         versionCode         6
         externalNativeBuild {
             cmake {
-                cppFlags    '-Wall', '-Wextra', '-fno-rtti'
+                cppFlags    '-Wall', '-Wextra', '-Wno-unused-parameter', '-fno-rtti'
                 arguments   '-DANDROID_STL=c++_shared'
-                arguments   '-DBUILD_SHARED_LIBS=true'
                 targets     'muffin'
             }
         }

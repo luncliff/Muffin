@@ -52,8 +52,8 @@ PROPERTIES
 
 target_sources(muffin
 PRIVATE
-    android/jni/adapter.h
-    android/jni/adapter.cpp
+    src/adapter.h
+    src/adapter.cpp
 )
 
 # path for <asm/types.h>
@@ -84,7 +84,7 @@ if(ANDROID_STL STREQUAL "c++_shared")
     #     ${ANDROID_NDK}/sources/cxx-stl/llvm-libc++/libs/${ANDROID_ABI}/
     # )
     target_compile_options(muffin
-    PRIVATE
+    PUBLIC
         -stdlib=libc++ -std=c++2a
         -fcoroutines-ts
     )
@@ -120,8 +120,8 @@ PRIVATE
 
 target_link_libraries(muffin
 PRIVATE
-    ${CMAKE_DL_LIBS} ${ANDROID_STL} m android log camera2ndk mediandk EGL GLESv3 vulkan
-    fmt spdlog png turbojpeg jpeg
+    ${CMAKE_DL_LIBS} ${ANDROID_STL} m android log 
+    # camera2ndk mediandk EGL GLESv3 vulkan
 )
 
 target_compile_definitions(muffin
@@ -137,11 +137,6 @@ if(CMAKE_CXX_COMPILER_ID MATCHES Clang)
 endif()
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
-    target_compile_options(muffin
-    PRIVATE
-        -g -O0
-    )
-
     # https://developer.android.com/ndk/guides/asan
     # https://github.com/google/sanitizers/wiki/AddressSanitizer
     # https://source.android.com/devices/tech/debug/sanitizers
@@ -172,12 +167,6 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
                             # clang_rt.ubsan_minimal-${san_arch}-android
         )
     endif()
-
-else()
-    target_compile_options(muffin
-    PRIVATE
-        # -O3
-    )
 endif()
 
 install(TARGETS         muffin

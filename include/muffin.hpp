@@ -10,9 +10,10 @@
 #error "requries __ANDROID__ and __ANDROID_API__"
 #endif
 static_assert(__cplusplus >= 201703L, "requires C++ 17 or later");
-
+#include <array>
+#include <cerrno>
 #include <experimental/coroutine>
-#include <gsl/gsl>
 #include <new>
 #include <stdexcept>
 #include <string_view>
+#include <string>
