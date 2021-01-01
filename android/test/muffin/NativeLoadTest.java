@@ -17,17 +17,7 @@ public class NativeLoadTest {
     }
     @Test
     public void png() {
-        System.loadLibrary("png");
-    }
-    @Test
-    public void turbojpeg() {
-        System.loadLibrary("jpeg");
-        System.loadLibrary("turbojpeg");
-    }
-    @Test
-    public void spdlog() {
-        System.loadLibrary("fmt");
-        System.loadLibrary("spdlog");
+        System.loadLibrary("apng-drawable");
     }
     @Test
     public void muffin() {
