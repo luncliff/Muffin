@@ -43,10 +43,10 @@ before_install:
   # forced upgrade of CMake
   - sudo rm -rf /usr/local/cmake-*
   - mkdir -p build && pushd build
-  - wget -q https://cmake.org/files/v3.20/cmake-3.20.0-Linux-x86_64.tar.gz
-  - tar -xvf ./cmake-3.20.0-Linux-x86_64.tar.gz > /dev/null
-  - sudo mv cmake-3.20.0-Linux-x86_64/bin/* /usr/bin/
-  - sudo mv cmake-3.20.0-Linux-x86_64/share/cmake-3.20 /usr/share/cmake-3.20
+  - wget -q https://cmake.org/files/v3.20/cmake-3.20.0-linux-x86_64.tar.gz
+  - tar -xvf ./cmake-3.20.0-linux-x86_64.tar.gz > /dev/null
+  - sudo mv cmake-3.20.0-linux-x86_64/bin/* /usr/bin/
+  - sudo mv cmake-3.20.0-linux-x86_64/share/cmake-3.20 /usr/share/cmake-3.20
   - popd
   - cmake --version && which cmake
 
