@@ -1,3 +1,8 @@
+#
+# References
+# - https://github.com/zurfyx/travis-android
+
+#
 git:
   submodules: false
   depth: 3
@@ -5,7 +10,11 @@ git:
 notifications:
   email:
     - luncliff@gmail.com
-  
+
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+
 os: linux
 dist: xenial
 addons:
@@ -26,24 +35,24 @@ android:
     - platform-tools
     - android-30
     - build-tools-30.0.3
-    - ndk;21.3.6528147
   licenses:
-    - 'android-sdk-license-.+'
-    - 'google-gdk-license-.+'
+    - "android-sdk-license-.+"
+    - "google-gdk-license-.+"
 
 before_install:
-  # forced upgrade cmake
-  - sudo rm -rf /usr/local/cmake-3.9.2
+  # forced upgrade of CMake
+  - sudo rm -rf /usr/local/cmake-*
   - mkdir -p build && pushd build
-  - wget -q https://cmake.org/files/v3.18/cmake-3.18.0-Linux-x86_64.tar.gz
-  - tar -xvf ./cmake-3.18.0-Linux-x86_64.tar.gz > /dev/null
-  - sudo mv cmake-3.18.0-Linux-x86_64/bin/* /usr/bin/
-  - sudo mv cmake-3.18.0-Linux-x86_64/share/cmake-3.18 /usr/share/cmake-3.18
+  - wget -q https://cmake.org/files/v3.20/cmake-3.20.0-Linux-x86_64.tar.gz
+  - tar -xvf ./cmake-3.20.0-Linux-x86_64.tar.gz > /dev/null
+  - sudo mv cmake-3.20.0-Linux-x86_64/bin/* /usr/bin/
+  - sudo mv cmake-3.20.0-Linux-x86_64/share/cmake-3.20 /usr/share/cmake-3.20
   - popd
   - cmake --version && which cmake
 
 install:
-  # - bash ./scripts/travis-ci.sh "ndk;21.3.6528147"
+  # Android NDK
+  - bash ./scripts/travis-ci.sh "ndk;21.3.6528147"
   - bash ./scripts/travis-ci.sh "ndk;22.1.7171670"
   # Gradle
   - curl -s "https://get.sdkman.io" | bash > /dev/null
