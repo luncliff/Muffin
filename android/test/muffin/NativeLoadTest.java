@@ -1,26 +1,19 @@
 package muffin;
 
-import android.content.Context;
-
-import androidx.test.core.app.ApplicationProvider;
-
 import org.junit.Before;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import java.util.concurrent.Executor;
 
 public class NativeLoadTest {
     @Before
-    public void stl(){
+    public void checkSTL(){
         System.loadLibrary("c++_shared");
     }
     @Test
-    public void png() {
+    public void check_png() {
         System.loadLibrary("apng-drawable");
     }
     @Test
-    public void muffin() {
+    public void check_muffin() {
         System.loadLibrary("muffin");
     }
 }

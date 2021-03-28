@@ -6,6 +6,7 @@ trigger:
   branches:
     exclude:
       - docs
+      - gh-pages
 
 jobs:
   - job: macosx_gradle

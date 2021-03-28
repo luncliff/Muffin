@@ -32,12 +32,12 @@ cd ${INSTALL_PATH}
 
 ### Build
 
-The build step uses [Gradle 6.1.1+](https://gradle.org/). If you don't know how to use it, latest [Android Studio](https://developer.android.com/studio/) can do the work.   
+The build step uses [Gradle 6.7.1+](https://gradle.org/). If you don't know how to use it, latest [Android Studio](https://developer.android.com/studio/) can do the work.   
 
 ```console
 $ git clone https://github.com/luncliff/Muffin
 $ cd ./Muffin
-$ gradle assemble build
+$ gradle clean assemble
 ```
 
 ### Test

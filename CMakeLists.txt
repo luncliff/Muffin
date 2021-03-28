@@ -40,49 +40,18 @@ message(STATUS "  - stl: ${ANDROID_STL}") # c++_shared
 add_library(muffin
     include/muffin.hpp
     src/libmain.cpp
+    src/adapter.h
+    src/adapter.cpp
 )
 
 # https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html#cross-compiling-for-android-with-the-ndk
 set_target_properties(muffin
 PROPERTIES
     PUBLIC_HEADER   include/muffin.hpp
-    # CXX_STANDARD 20
-    ANDROID_API_MIN 24
+    ANDROID_API_MIN 28
 )
-
-target_sources(muffin
-PRIVATE
-    src/adapter.h
-    src/adapter.cpp
-)
-
-# path for <asm/types.h>
-# if(ANDROID_ABI STREQUAL "arm64-v8a")
-#     target_include_directories(muffin
-#     PRIVATE
-#         ${ANDROID_NDK}/sysroot/usr/include/aarch64-linux-android
-#     )
-# elseif(ANDROID_ABI MATCHES "arm")
-#     target_include_directories(muffin
-#     PRIVATE
-#         ${ANDROID_NDK}/sysroot/usr/include/arm-linux-androideabi
-#     )
-# elseif(ANDROID_ABI MATCHES "x86") # x86, x86_64
-#     target_include_directories(muffin
-#     PRIVATE
-#         ${ANDROID_NDK}/sysroot/usr/include/x86_64-linux-android
-#     )
-# endif()
 
 if(ANDROID_STL STREQUAL "c++_shared")
-    # target_include_directories(muffin
-    # PRIVATE
-    #     ${ANDROID_NDK}/sources/cxx-stl/llvm-libc++/include/
-    # )
-    # target_link_directories(muffin
-    # PRIVATE
-    #     ${ANDROID_NDK}/sources/cxx-stl/llvm-libc++/libs/${ANDROID_ABI}/
-    # )
     target_compile_options(muffin
     PUBLIC
         -stdlib=libc++ -std=c++2a
@@ -91,30 +60,17 @@ if(ANDROID_STL STREQUAL "c++_shared")
 
 elseif(ANDROID_STL STREQUAL "gnustl_shared")
     message(WARNING "recommend ANDROID_STL=c++_shared")
-    # target_include_directories(muffin
-    # PRIVATE
-    #     ${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/include/
-    # )
-    # target_link_directories(muffin
-    # PRIVATE
-    #     ${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.9/libs/${ANDROID_ABI}/
-    # )
-
 else()
     message(FATAL_ERROR "requires ANDROID_STL 'c++_shared' or 'gnustl_shared'")
 endif()
 
 target_include_directories(muffin
 PRIVATE
-    # ${ANDROID_NDK}/sysroot/usr/include/
-    # ${ANDROID_NDK}/sources/android/support/include/
-    # ${ANDROID_NDK}/platforms/${ANDROID_PLATFORM}/arch-${ANDROID_ARCH_NAME}/usr/include/
     include jniLibs/include
 )
 
 target_link_directories(muffin
 PRIVATE
-    # ${ANDROID_NDK}/platforms/${ANDROID_PLATFORM}/arch-${ANDROID_ARCH_NAME}/usr/lib/
     jniLibs/${ANDROID_ABI}
 )
 
@@ -136,8 +92,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES Clang)
     )
 endif()
 
+# https://developer.android.com/ndk/guides/asan
 if(CMAKE_BUILD_TYPE MATCHES Debug)
-    # https://developer.android.com/ndk/guides/asan
     # https://github.com/google/sanitizers/wiki/AddressSanitizer
     # https://source.android.com/devices/tech/debug/sanitizers
     if(ANDROID_PLATFORM_LEVEL GREATER 26 AND ANDROID_ARCH_NAME MATCHES "arm")

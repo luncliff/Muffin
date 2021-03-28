@@ -24,8 +24,9 @@ android:
   components: # Android SDK Manager
     - tools
     - platform-tools
-    - android-28
-    - build-tools-28.0.3
+    - android-30
+    - build-tools-30.0.3
+    - ndk;21.3.6528147
   licenses:
     - 'android-sdk-license-.+'
     - 'google-gdk-license-.+'
@@ -42,7 +43,8 @@ before_install:
   - cmake --version && which cmake
 
 install:
-  - bash ./scripts/travis-ci.sh "ndk;21.3.6528147"
+  # - bash ./scripts/travis-ci.sh "ndk;21.3.6528147"
+  - bash ./scripts/travis-ci.sh "ndk;22.1.7171670"
   # Gradle
   - curl -s "https://get.sdkman.io" | bash > /dev/null
   - source "$HOME/.sdkman/bin/sdkman-init.sh"
@@ -51,9 +53,9 @@ install:
 
 script:
   - gradle clean
+  - gradle androidDependencies
   - gradle assembleDebug
-  - gradle assembleRelease
-  - gradle assemble
+  - gradle assembleRelease assemble
 
 after_success:
   - tree ./build/intermediates/cmake/debug/obj

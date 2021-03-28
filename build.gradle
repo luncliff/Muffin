@@ -1,57 +1,73 @@
 //
 //  Author:  github.com/luncliff (luncliff@gmail.com)
 //
-//  To Do:
-//  - https://developer.android.com/studio/build/maven-publish-plugin?hl=en
-//
 import java.nio.file.Paths
-
 println "${project.buildDir}"
 
 buildscript {
     repositories {
         google()
-        jcenter()
+        jcenter() // see https://github.com/gradle/gradle/issues/16018
+        mavenCentral()
     }
     dependencies {
         // https://developer.android.com/studio/releases/gradle-plugin#4-0-0
-        classpath "com.android.tools.build:gradle:4.1.1" // expect Gradle 6.7.1+
-        classpath "de.mannodermaus.gradle.plugins:android-junit5:1.6.0.0"
+        classpath "com.android.tools.build:gradle:4.1.3" // expect Gradle 6.7.1+
+        classpath "de.mannodermaus.gradle.plugins:android-junit5:1.7.1.1"
     }
 }
+
+// todo: https://medium.com/@nhancv/android-publish-library-project-to-nexus-repository-manager-5f2bd2711600
+// todo: https://developer.android.com/studio/build/dependencies#google-maven
 repositories {
     google()
     jcenter()
+    mavenCentral()
+    // maven { url "http://.../content/repositories/releases/" }
 }
 
 apply plugin: "com.android.library"
 android {
-    compileSdkVersion 28
+    compileSdkVersion 30
+    buildToolsVersion "30.0.3"
     compileOptions {
         coreLibraryDesugaringEnabled true
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-    ndkVersion "21.3.6528147"
 
+    ndkVersion "22.1.7171670" // or "21.3.6528147"
     // https://developer.android.com/studio/build/configure-apk-splits#configure-abi-split
     splits {
         abi {
             enable true
-            universalApk true 
             reset()
             include "armeabi-v7a", "arm64-v8a", "x86_64"
+            exclude "armeabi"
+        }
+    }
+
+    buildTypes {
+        debug {
+            debuggable true
+            jniDebuggable true
+        }
+        release {
+            jniDebuggable true
+            minifyEnabled true
         }
     }
     defaultConfig {
         minSdkVersion       28
-        targetSdkVersion    28
-        versionName         "1.1.1"
-        versionCode         6
+        targetSdkVersion    30
+        // https://blog.mikepenz.dev/a/lib-version-name
+        // buildConfigField "String", "VERSION_NAME", "\"1.1.3\""
+
         externalNativeBuild {
             cmake {
                 cppFlags    "-Wall", "-Wextra", "-Wno-unused-parameter", "-fno-rtti"
                 arguments   "-DANDROID_STL=c++_shared"
+                arguments   "-DBUILD_SHARED_LIBS=true"
                 targets     "muffin"
             }
         }
@@ -65,6 +81,7 @@ android {
             path    "CMakeLists.txt"
         }
     }
+
     sourceSets {
         main.setRoot("android")
         main {
@@ -73,7 +90,7 @@ android {
         androidTest.setRoot("android/test")
         androidTest {
             java.srcDir "android/test"
-            assets.srcDir "android/test/assets"
+            assets.srcDir "android/testAssets"
         }
         // https://developer.android.com/studio/releases/gradle-plugin#cmake-imported-targets
         main.jniLibs.srcDirs = ["jniLibs"]
@@ -97,6 +114,7 @@ android {
     testOptions {
         unitTests.returnDefaultValues = true
         unitTests.all {
+            failFast = false
             testLogging {
                 events "passed", "skipped", "failed"
                 showStandardStreams = true
@@ -109,21 +127,66 @@ android {
     }
 }
 
+// https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_configurations_graph
 dependencies {
-    implementation fileTree(dir: "libs", include: ["*.jar", "*.aar"])
-    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:1.1.1"
-    api "com.linecorp:apng:1.9.1"
+    // implementation fileTree(dir: "libs", include: ["*.jar", "*.aar"])
+
+    // https://www.geeksforgeeks.org/desugaring-in-android/
+    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:1.1.5"
+    api group: "com.google.guava", name: "guava", version: "30.0-android"
+    // https://github.com/line/apng-drawable "21.3.6528147"
+    api group: "com.linecorp", name: "apng", version: "1.10.0"
 
     // https://developer.android.com/training/testing/set-up-project#android-test-dependencies
-    androidTestImplementation "androidx.test:core:1.3.0"
-    androidTestImplementation "androidx.test.ext:junit:1.1.2"
-    androidTestImplementation "androidx.test:rules:1.3.0"
-    androidTestImplementation "androidx.test:runner:1.3.0"
+    androidTestImplementation group: "androidx.test", name: "core", version: "1.3.0" // "androidx.test:core:1.3.0"
+    androidTestImplementation group: "androidx.test", name: "rules", version: "1.3.0" // "androidx.test:rules:1.3.0"
+    androidTestImplementation group: "androidx.test", name: "runner", version: "1.3.0" // "androidx.test:runner:1.3.0"
+    androidTestImplementation group: "androidx.test.ext", name: "junit", version: "1.1.2" // "androidx.test.ext:junit:1.1.2"
 
-    androidTestImplementation "de.mannodermaus.junit5:android-test-core:1.2.0"
-    androidTestRuntimeOnly "de.mannodermaus.junit5:android-test-runner:1.2.0"
+    // "org.junit.jupiter:junit-jupiter-api:5.7.1"
+    // "org.junit.jupiter:junit-jupiter-params:5.7.1"
+    // "org.junit.jupiter:junit-jupiter-engine:5.7.1"
+    androidTestImplementation group: "org.junit.jupiter", name: "junit-jupiter-api", version: "5.7.1"
+    androidTestImplementation group: "org.junit.jupiter", name: "junit-jupiter-params", version: "5.7.1"
+    androidTestRuntimeOnly group: "org.junit.jupiter", name: "junit-jupiter-engine", version: "5.7.1"
 
-    androidTestImplementation "org.junit.jupiter:junit-jupiter-api:5.7.0"
-    androidTestImplementation "org.junit.jupiter:junit-jupiter-params:5.7.0"
-    androidTestRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.7.0"
+    // "de.mannodermaus.junit5:android-test-core:1.2.0"
+    // "de.mannodermaus.junit5:android-test-runner:1.2.0"
+    androidTestImplementation group: "de.mannodermaus.junit5", name: "android-test-core", version: "1.2.0"
+    androidTestRuntimeOnly group: "de.mannodermaus.junit5", name: "android-test-runner", version: "1.2.0"
+}
+
+// !!! This is WIP. Not working example !!!
+// todo: publish to mavenCentral or designated Nexus
+// https://developer.android.com/studio/build/maven-publish-plugin
+// https://docs.gradle.org/current/userguide/publishing_maven.html
+apply plugin: "maven-publish"
+afterEvaluate {
+    publishing {
+        repositories {
+            maven {
+                url = "https://.../content/repositories/nightly/"
+                credentials {
+                    username = System.getenv("PUBLISH_USERNAME")
+                    password = System.getenv("PUBLISH_PASSWORD")
+                }
+            }
+        }
+        // https://docs.oracle.com/middleware/1212/core/MAVEN/maven_version.htm
+        publications {
+            // for AAR, use components.variant
+            release(MavenPublication) {
+                from components.release
+                groupId = "org.luncliff"
+                version = "1.1.3-SNAPSHOT"
+                artifactId = "muffin"
+            }
+            debug(MavenPublication) {
+                from components.debug
+                groupId = "org.luncliff"
+                version = "1.1.3-SNAPSHOT"
+                artifactId = "muffin-debug"
+            }
+        }
+    }
 }
