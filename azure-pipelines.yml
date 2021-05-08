@@ -10,20 +10,38 @@ jobs:
     pool:
       vmImage: "macOS-latest"
     variables:
-      VCPKG_TOOLCHAIN_FILE: value1
+      VCPKG_ROOT: "/usr/local/share/vcpkg" # check $VCPKG_INSTALLATION_ROOT
+      ANDROID_NDK_HOME: "/Users/runner/Library/Android/sdk/ndk/21.4.7075529" # see scripts/azure-pipelines.sh, check $ANDROID_SDK_ROOT
     steps:
       - checkout: self
-        submodules: true
+      - script: env
+        displayName: "Report Environment Variables"
       - task: CmdLine@2
         inputs:
           script: |
-            env
             brew install ninja
+            brew install tree
+            pushd ${VCPKG_ROOT}
+              pushd triplets/community
+                wget https://raw.githubusercontent.com/luncliff/vcpkg-registry/main/triplets/arm64-android.cmake
+                wget https://raw.githubusercontent.com/luncliff/vcpkg-registry/main/triplets/arm-android.cmake
+                wget https://raw.githubusercontent.com/luncliff/vcpkg-registry/main/triplets/x64-android.cmake
+              popd
+              tree -L 2 $(pwd)/triplets
+            popd
+        displayName: "Setup: Homebrew/Vcpkg"
+      - task: CmdLine@2
+        inputs:
+          script: |
             brew uninstall cmake
-            bash ./scripts/azure-pipelines.sh
+            bash ./scripts/azure-pipelines.sh > /dev/null
+        displayName: "Setup: Android SDK"
+      - task: CmdLine@2
+        inputs:
+          script: |
             gradle --version
             gradle wrapper
-        displayName: "Check Environment"
+        displayName: "Gradle: Wrapper"
       - task: Gradle@2
         inputs:
           gradleWrapperFile: "gradlew"

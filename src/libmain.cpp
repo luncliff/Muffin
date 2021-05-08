@@ -2,6 +2,8 @@
  * @author Park DongHa (luncliff@gmail.com)
  */
 #include <muffin.hpp>
+
+#include <gsl/gsl>
 #include <spdlog/spdlog.h>
 #if __has_include(<EGL/eglext_angle.h>)
 #include <EGL/eglext_angle.h>

@@ -31,7 +31,6 @@ static_assert(__cplusplus >= 201703L, "requires C++ 17 or later");
 #include <new>
 #include <cerrno>
 #include <experimental/coroutine>
-#include <gsl/gsl>
 // clang-format off
 #if __has_include(<vulkan/vulkan.h>)
 #  include <vulkan/vulkan.h>
@@ -55,7 +54,7 @@ class _INTERFACE_ egl_context_t final {
   private:
     EGLDisplay display = EGL_NO_DISPLAY; // EGL_NO_DISPLAY when `terminate`d
     uint16_t major = 0, minor = 0;
-    gsl::owner<EGLContext> context = EGL_NO_CONTEXT;
+    EGLContext context = EGL_NO_CONTEXT;
     EGLConfig configs[1]{};
     EGLSurface surface = EGL_NO_SURFACE; // EGLSurface for Draw/Read
 
