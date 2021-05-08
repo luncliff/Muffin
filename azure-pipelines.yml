@@ -1,23 +1,23 @@
 #
-#   Author: luncliff@gmail.com
+# References
+#   - https://docs.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=azure-devops
 #
-
-trigger:
-  branches:
-    exclude:
-      - docs
-      - gh-pages
+variables:
+  VCPKG_FEATURE_FLAGS: "versions,manifests,registries,binarycaching"
 
 jobs:
   - job: build_check_0
     pool:
       vmImage: "macOS-latest"
+    variables:
+      VCPKG_TOOLCHAIN_FILE: value1
     steps:
       - checkout: self
         submodules: true
       - task: CmdLine@2
         inputs:
           script: |
+            env
             brew install ninja
             brew uninstall cmake
             bash ./scripts/azure-pipelines.sh
@@ -46,3 +46,21 @@ jobs:
           contents: "$(Build.SourcesDirectory)/build/outputs/aar/*.aar"
           targetFolder: "$(build.artifactStagingDirectory)"
       - task: PublishBuildArtifacts@1
+
+trigger:
+  branches:
+    exclude:
+      - docs
+      - gh-pages
+
+schedules:
+  - cron: "0 3 * * 0"
+    displayName: "Weekly Build"
+    branches:
+      include:
+        - master
+        - support/*
+      exclude:
+        - docs
+        - gh-pages
+    always: true

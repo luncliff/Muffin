@@ -2,7 +2,7 @@
 //  Author:  github.com/luncliff (luncliff@gmail.com)
 //
 import java.nio.file.Paths
-println "${project.buildDir}"
+println "Project: ${project.buildDir}"
 
 buildscript {
     repositories {
@@ -26,6 +26,14 @@ repositories {
     mavenCentral()
     maven { url "https://jitpack.io" }
 }
+
+def vcpkg_root = Paths.get(System.getenv("VCPKG_ROOT")).toAbsolutePath()
+def vcpkg_toolchain_file = Paths.get(vcpkg_root.toString(), "scripts", "buildsystems", "vcpkg.cmake")
+println("Using vcpkg: ${vcpkg_toolchain_file}")
+
+def ndk_root = Paths.get(System.getenv("ANDROID_NDK_HOME")).toAbsolutePath()
+def ndk_toolchain_file = Paths.get(ndk_root.toString(), "build", "cmake", "android.toolchain.cmake")
+println("Using NDK: ${ndk_toolchain_file}")
 
 apply plugin: "com.android.library"
 android {
@@ -63,9 +71,11 @@ android {
         // buildConfigField "String", "VERSION_NAME", "\"1.1.3\""
         externalNativeBuild {
             cmake {
-                cppFlags    "-Wall", "-Wextra", "-Wno-unused-parameter", "-fno-rtti"
+                cppFlags    "-Wall", "-Wextra", "-fno-rtti", "-fno-exceptions"
                 arguments   "-DANDROID_STL=c++_shared"
                 arguments   "-DBUILD_SHARED_LIBS=true"
+                arguments   "-DCMAKE_TOOLCHAIN_FILE=${vcpkg_toolchain_file}"
+                arguments   "-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${ndk_toolchain_file}"
                 targets     "muffin"
             }
         }

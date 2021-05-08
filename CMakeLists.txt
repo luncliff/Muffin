@@ -3,8 +3,12 @@
 #      luncliff@gmail.com
 #
 cmake_minimum_required(VERSION 3.13)
-project(muffin LANGUAGES CXX VERSION 1.1.3)
 
+# https://github.com/microsoft/vcpkg/blob/master/docs/examples/vcpkg_android_example_cmake_script/CMakeLists.txt
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
+include(vcpkg_android)
+
+project(muffin LANGUAGES CXX VERSION 1.1.3)
 if(NOT ANDROID)
     message(FATAL_ERROR "requires CMAKE_TOOLCHAIN_FILE=android.toolchain.cmake")
 endif()
@@ -13,6 +17,9 @@ endif()
 if(NOT DEFINED BUILD_SHARED_LIBS)
     set(BUILD_SHARED_LIBS true) 
 endif()
+
+find_package(Microsoft.GSL CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
 
 include(CheckIncludeFileCXX)
 check_include_file_cxx("vulkan/vulkan.h" found_vulkan)
@@ -77,7 +84,8 @@ PRIVATE
 target_link_libraries(muffin
 PRIVATE
     ${CMAKE_DL_LIBS} ${ANDROID_STL} m android log 
-    # camera2ndk mediandk EGL GLESv3 vulkan
+    EGL GLESv3 # camera2ndk mediandk vulkan
+    Microsoft.GSL::GSL spdlog::spdlog
 )
 
 target_compile_definitions(muffin
@@ -93,7 +101,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES Clang)
 endif()
 
 # https://developer.android.com/ndk/guides/asan
-if(CMAKE_BUILD_TYPE MATCHES Debug)
+if(false)
     # https://github.com/google/sanitizers/wiki/AddressSanitizer
     # https://source.android.com/devices/tech/debug/sanitizers
     if(ANDROID_PLATFORM_LEVEL GREATER 26 AND ANDROID_ARCH_NAME MATCHES "arm")
