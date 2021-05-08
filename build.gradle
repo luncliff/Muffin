@@ -39,6 +39,7 @@ println("Using NDK: ${ndk_toolchain_file}")
 
 // apply plugin: "org.sonarqube"
 
+// https://snowdeer.github.io/android/2019/07/04/how-to-use-jacoco-plugin/
 // https://blog.gouline.net/code-coverage-on-android-with-jacoco-92ec90c9355e
 // apply plugin: "jacoco"
 // jacoco {
