@@ -4,6 +4,7 @@
 #
 variables:
   VCPKG_FEATURE_FLAGS: "versions,manifests,registries,binarycaching"
+  GRADLE_USER_HOME: $(Pipeline.Workspace)/.gradle
 
 jobs:
   - job: build_check_0
@@ -11,6 +12,7 @@ jobs:
       vmImage: "macOS-latest"
     variables:
       VCPKG_ROOT: "/usr/local/share/vcpkg" # check $VCPKG_INSTALLATION_ROOT
+      VCPKG_DEFAULT_BINARY_CACHE: /usr/local/share/vcpkg/archives
       ANDROID_NDK_HOME: "/Users/runner/Library/Android/sdk/ndk/22.1.7171670" # see scripts/azure-pipelines.sh, check $ANDROID_SDK_ROOT
     steps:
       - checkout: self
@@ -22,6 +24,7 @@ jobs:
             brew install ninja
             brew install tree
             pushd ${VCPKG_ROOT}
+              mkdir -p ${VCPKG_DEFAULT_BINARY_CACHE}
               pushd triplets/community
                 wget https://raw.githubusercontent.com/luncliff/vcpkg-registry/main/triplets/arm64-android.cmake
                 wget https://raw.githubusercontent.com/luncliff/vcpkg-registry/main/triplets/arm-android.cmake
@@ -36,6 +39,22 @@ jobs:
             brew uninstall cmake
             bash ./scripts/azure-pipelines.sh > /dev/null
         displayName: "Setup: Android SDK"
+      - task: Cache@2
+        inputs:
+          key: 'vcpkg-android | "$(Agent.OS)"'
+          path: $(VCPKG_DEFAULT_BINARY_CACHE)
+          restoreKeys: |
+            vcpkg-android | "$(Agent.OS)"
+            $(Agent.OS)
+        displayName: "Cache: Vcpkg"
+      - task: Cache@2
+        inputs:
+          key: 'gradle | "$(Agent.OS)"'
+          path: $(GRADLE_USER_HOME)
+          restoreKeys: |
+            gradle | "$(Agent.OS)"
+            $(Agent.OS)
+        displayName: "Cache: Gradle"
       - task: CmdLine@2
         inputs:
           script: |

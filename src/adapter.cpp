@@ -26,11 +26,11 @@ extern "C" jint JNI_OnLoad(JavaVM *vm, void *) {
     if (auto level = android_get_device_api_level(); level > 0)
         android_level = level;
 
-    // auto stream = spdlog::android_logger_st("android", "muffin");
-    // stream->set_level(spdlog::level::debug);
-    // spdlog::set_default_logger(stream);
-    // // Logcat will report time, thread, and level. just print message without decoration
-    // spdlog::set_pattern("%v");
+    auto stream = spdlog::android_logger_st("android", "muffin");
+    stream->set_level(spdlog::level::debug);
+    spdlog::set_default_logger(stream);
+    // Logcat will report time, thread, and level. just print message without decoration
+    spdlog::set_pattern("%v");
     return version;
 }
 
