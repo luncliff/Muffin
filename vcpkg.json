@@ -1,0 +1,10 @@
+{
+    "name": "muffin",
+    "version-string": "1.1.3",
+    "homepage": "https://github.com/luncliff/muffin",
+    "description": "Template for Android NDK module",
+    "dependencies": [
+        "ms-gsl",
+        "spdlog"
+    ]
+}
