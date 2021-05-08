@@ -9,38 +9,39 @@ trigger:
       - gh-pages
 
 jobs:
-  - job: macosx_gradle
+  - job: build_check_0
     pool:
-      vmImage: macos-latest
-
+      vmImage: "macOS-latest"
     steps:
       - checkout: self
         submodules: true
-
       - task: CmdLine@2
         inputs:
           script: |
             brew install ninja
             brew info cmake
-        displayName: "Homebrew"
-
-      - task: CmdLine@2
-        inputs:
-          script: |
             gradle --version
             gradle wrapper
-        displayName: "Make Gradle Wrapper"
-
+        displayName: "Check Environment"
       - task: Gradle@2
         inputs:
-          workingDirectory: ""
           gradleWrapperFile: "gradlew"
+          publishJUnitResults: false
           gradleOptions: "-Xmx3072m"
-          tasks: "clean"
-
+          tasks: "androidDependencies"
+          options: "--info"
+        displayName: "Gradle: androidDependencies"
       - task: Gradle@2
         inputs:
-          workingDirectory: ""
           gradleWrapperFile: "gradlew"
+          publishJUnitResults: false
+          checkStyleRunAnalysis: true
           gradleOptions: "-Xmx3072m"
           tasks: "assemble"
+          options: "--info"
+        displayName: "Gradle: assemble"
+      - task: CopyFiles@2
+        inputs:
+          contents: "build/outputs/aar/*.apk"
+          targetFolder: "$(build.artifactStagingDirectory)"
+      - task: PublishBuildArtifacts@1

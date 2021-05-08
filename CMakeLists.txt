@@ -3,7 +3,7 @@
 #      luncliff@gmail.com
 #
 cmake_minimum_required(VERSION 3.13)
-project(muffin LANGUAGES CXX VERSION 1.1.2)
+project(muffin LANGUAGES CXX VERSION 1.1.3)
 
 if(NOT ANDROID)
     message(FATAL_ERROR "requires CMAKE_TOOLCHAIN_FILE=android.toolchain.cmake")

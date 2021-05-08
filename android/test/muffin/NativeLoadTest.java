@@ -9,10 +9,6 @@ public class NativeLoadTest {
         System.loadLibrary("c++_shared");
     }
     @Test
-    public void check_png() {
-        System.loadLibrary("apng-drawable");
-    }
-    @Test
     public void check_muffin() {
         System.loadLibrary("muffin");
     }
