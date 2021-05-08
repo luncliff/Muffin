@@ -19,7 +19,8 @@ jobs:
         inputs:
           script: |
             brew install ninja
-            brew info cmake
+            brew uninstall cmake
+            bash ./scripts/azure-pipelines.sh
             gradle --version
             gradle wrapper
         displayName: "Check Environment"
@@ -38,10 +39,10 @@ jobs:
           checkStyleRunAnalysis: true
           gradleOptions: "-Xmx3072m"
           tasks: "assemble"
-          options: "--info"
+          options: "--warning-mode all"
         displayName: "Gradle: assemble"
       - task: CopyFiles@2
         inputs:
-          contents: "build/outputs/aar/*.apk"
+          contents: "$(Build.SourcesDirectory)/build/outputs/aar/*.aar"
           targetFolder: "$(build.artifactStagingDirectory)"
       - task: PublishBuildArtifacts@1
