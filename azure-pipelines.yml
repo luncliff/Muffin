@@ -38,7 +38,7 @@ jobs:
           script: |
             brew uninstall cmake
             bash ./scripts/azure-pipelines.sh > /dev/null
-        displayName: "Setup: Android SDK"
+        displayName: "Setup: Android SDK / AVD"
       - task: Cache@2
         inputs:
           key: 'vcpkg-android | "$(Agent.OS)"'
@@ -92,6 +92,12 @@ jobs:
           contents: "$(Build.SourcesDirectory)/build/outputs/aar/*.aar"
           targetFolder: "$(build.artifactStagingDirectory)"
       - task: PublishBuildArtifacts@1
+      - task: Gradle@2
+        inputs:
+          gradleWrapperFile: "gradlew"
+          publishJUnitResults: true
+          tasks: "connectedAndroidTest"
+        displayName: "Gradle: connectedAndroidTest"
 
 trigger:
   branches:
