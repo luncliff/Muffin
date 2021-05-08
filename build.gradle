@@ -2,8 +2,6 @@
 //  Author:  github.com/luncliff (luncliff@gmail.com)
 //
 import java.nio.file.Paths
-println "Project: ${project.buildDir}"
-
 buildscript {
     repositories {
         google()
@@ -14,7 +12,9 @@ buildscript {
         // https://developer.android.com/studio/releases/gradle-plugin#4-0-0
         // expect Gradle 6.7.1+
         classpath("com.android.tools.build:gradle:4.1.3")
+        // https://github.com/mannodermaus/android-junit5
         classpath("de.mannodermaus.gradle.plugins:android-junit5:1.7.1.1")
+        // classpath("org.jacoco:org.jacoco.core:0.8.5")
     }
 }
 
@@ -27,6 +27,8 @@ repositories {
     maven { url "https://jitpack.io" }
 }
 
+println "Project: ${project.buildDir}"
+
 def vcpkg_root = Paths.get(System.getenv("VCPKG_ROOT")).toAbsolutePath()
 def vcpkg_toolchain_file = Paths.get(vcpkg_root.toString(), "scripts", "buildsystems", "vcpkg.cmake")
 println("Using vcpkg: ${vcpkg_toolchain_file}")
@@ -34,6 +36,14 @@ println("Using vcpkg: ${vcpkg_toolchain_file}")
 def ndk_root = Paths.get(System.getenv("ANDROID_NDK_HOME")).toAbsolutePath()
 def ndk_toolchain_file = Paths.get(ndk_root.toString(), "build", "cmake", "android.toolchain.cmake")
 println("Using NDK: ${ndk_toolchain_file}")
+
+// apply plugin: "org.sonarqube"
+
+// https://blog.gouline.net/code-coverage-on-android-with-jacoco-92ec90c9355e
+// apply plugin: "jacoco"
+// jacoco {
+//     toolVersion = "0.8.5"
+// }
 
 apply plugin: "com.android.library"
 android {
@@ -58,6 +68,7 @@ android {
         debug {
             debuggable true
             jniDebuggable true
+            testCoverageEnabled true
         }
         release {
             jniDebuggable true
@@ -133,8 +144,6 @@ android {
         }
     }
 }
-
-apply plugin: "de.mannodermaus.android-junit5"
 
 // https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_configurations_graph
 dependencies {
