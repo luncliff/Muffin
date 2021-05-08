@@ -4,9 +4,10 @@
  */
 #include "adapter.h"
 #include <chrono>
-// #define SPDLOG_FMT_EXTERNAL
-// #include <spdlog/sinks/android_sink.h>
-// #include <spdlog/spdlog.h>
+#include <spdlog/sinks/android_sink.h>
+#include <spdlog/spdlog.h>
+#include <string>
+#include <string_view>
 
 using namespace std::chrono_literals;
 using namespace std::string_literals;

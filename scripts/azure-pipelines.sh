@@ -5,7 +5,7 @@
 #
 echo ${ANDROID_HOME}
 echo "y" | $ANDROID_HOME/tools/bin/sdkmanager --install 'cmake;3.18.1'
-echo "y" | $ANDROID_HOME/tools/bin/sdkmanager --install 'ndk;21.4.7075529'
+echo "y" | $ANDROID_HOME/tools/bin/sdkmanager --install 'ndk;22.1.7171670'
 # echo "y" | $ANDROID_HOME/tools/bin/sdkmanager --install 'system-images;android-28;google_apis;x86_64'
 # echo "no" | $ANDROID_HOME/tools/bin/avdmanager create avd -n xamarin_android_emulator -k 'system-images;android-28;google_apis;x86_64' --force
 # $ANDROID_HOME/emulator/emulator -list-avds

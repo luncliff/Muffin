@@ -91,6 +91,7 @@ PRIVATE
 target_compile_definitions(muffin
 PRIVATE
     AUTHOR_LABEL="luncliff@gmail.com"
+    SPDLOG_NO_TLS
 )
 
 if(CMAKE_CXX_COMPILER_ID MATCHES Clang)

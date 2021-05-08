@@ -44,7 +44,7 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-    ndkVersion "21.4.7075529" // or "21.3.6528147"
+    ndkVersion "22.1.7171670" // or "21.3.6528147"
     // https://developer.android.com/studio/build/configure-apk-splits#configure-abi-split
     splits {
         abi {
