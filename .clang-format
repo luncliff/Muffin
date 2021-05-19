@@ -1,9 +1,9 @@
-BasedOnStyle: LLVM
-Language: Cpp
-Standard: Cpp11
-
-UseTab: Never
-IndentWidth: 4
-
+BasedOnStyle: Google
 AlignTrailingComments: true
 ReflowComments: false
+---
+Language: Cpp
+Standard: Cpp11
+UseTab: Never
+IndentWidth: 4
+---

@@ -24,11 +24,7 @@
 #   error "unexpected linking configuration"
 #endif
 // clang-format on
-#if !defined(__ANDROID__) || !defined(__ANDROID_API__)
-#error "requries __ANDROID__ and __ANDROID_API__"
-#endif
 static_assert(__cplusplus >= 201703L, "requires C++ 17 or later");
-#include <new>
 #include <cerrno>
 #include <experimental/coroutine>
 // clang-format off
@@ -44,6 +40,10 @@ static_assert(__cplusplus >= 201703L, "requires C++ 17 or later");
 #  include <EGL/eglext.h>
 #endif
 // clang-format on
+#if !defined(__ANDROID__) || !defined(__ANDROID_API__)
+#error "requries __ANDROID__ and __ANDROID_API__"
+#endif
+#include <android/native_window_jni.h>
 
 /**
  * @brief `EGLContext` and `EGLSurface` owner.
@@ -51,14 +51,16 @@ static_assert(__cplusplus >= 201703L, "requires C++ 17 or later");
  * @see   https://www.saschawillems.de/blog/2015/04/19/using-opengl-es-on-windows-desktops-via-egl/
  */
 class _INTERFACE_ egl_context_t final {
-  private:
-    EGLDisplay display = EGL_NO_DISPLAY; // EGL_NO_DISPLAY when `terminate`d
-    uint16_t major = 0, minor = 0;
+   private:
+    EGLDisplay display = EGL_NO_DISPLAY;  // EGL_NO_DISPLAY when `terminate`d
+    EGLint version[2]{};                  // major, minor
     EGLContext context = EGL_NO_CONTEXT;
-    EGLConfig configs[1]{};
-    EGLSurface surface = EGL_NO_SURFACE; // EGLSurface for Draw/Read
+    EGLConfig configs[4]{};               // default, rgb565, rgb24, rgba32
+    EGLSurface surface = EGL_NO_SURFACE;  // EGLSurface for Draw/Read
+    std::unique_ptr<ANativeWindow, void (*)(ANativeWindow *)> window{nullptr,
+                                                                     nullptr};
 
-  public:
+   public:
     /**
      * @brief Acquire EGLDisplay and create an EGLContext for OpenGL ES 3.0+
      * 
@@ -68,7 +70,7 @@ class _INTERFACE_ egl_context_t final {
      */
     egl_context_t(EGLDisplay display, EGLContext share_context) noexcept;
     /**
-     * @see terminate
+     * @see suspend
      */
     ~egl_context_t() noexcept;
     egl_context_t(egl_context_t const &) = delete;
@@ -103,6 +105,7 @@ class _INTERFACE_ egl_context_t final {
      *                    Always ignored. 
      */
     EGLint resume(EGLSurface es_surface, EGLConfig es_config) noexcept;
+    EGLint resume(JNIEnv *env, jobject surface) noexcept;
 
     /**
      * @brief   Unbind EGLSurface and EGLContext.
@@ -124,7 +127,4 @@ class _INTERFACE_ egl_context_t final {
     EGLint swap() noexcept;
 
     EGLContext handle() const noexcept;
-
-    EGLint get_configs(EGLConfig *configs, EGLint &count,
-                       const EGLint *attrs = nullptr) const noexcept;
 };

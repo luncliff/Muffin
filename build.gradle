@@ -148,6 +148,10 @@ android {
 
 // https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_configurations_graph
 dependencies {
+    api "androidx.core:core:1.5.0" // todo: add "androidx.core:core-ktx:1.5.0"
+    api "androidx.camera:camera-core:1.0.0"
+    api "androidx.camera:camera-camera2:1.0.0"
+    api "androidx.camera:camera-lifecycle:1.0.0"
     // https://www.geeksforgeeks.org/desugaring-in-android/
     coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:1.1.5"
     // https://developer.android.com/training/testing/set-up-project#android-test-dependencies

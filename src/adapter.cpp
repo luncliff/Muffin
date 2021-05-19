@@ -3,59 +3,98 @@
  * @author  github.com/luncliff (luncliff@gmail.com)
  */
 #include "adapter.h"
-#include <chrono>
+
 #include <spdlog/sinks/android_sink.h>
 #include <spdlog/spdlog.h>
+
+#include <chrono>
+#include <gsl/gsl>
 #include <string>
 #include <string_view>
 
-using namespace std::chrono_literals;
-using namespace std::string_literals;
-using namespace std::string_view_literals;
-
-uint32_t android_level = 0;
+using namespace std::experimental;
 
 extern "C" jint JNI_OnLoad(JavaVM *vm, void *) {
     constexpr auto version = JNI_VERSION_1_6;
     JNIEnv *env{};
     jint result = -1;
-    if (vm->GetEnv((void **)&env, version) != JNI_OK) {
-        return result;
-    }
-
-    if (auto level = android_get_device_api_level(); level > 0)
-        android_level = level;
+    if (vm->GetEnv((void **)&env, version) != JNI_OK) return result;
 
     auto stream = spdlog::android_logger_st("android", "muffin");
-    stream->set_level(spdlog::level::debug);
+    stream->set_pattern("%v");  // Logcat will report time, thread, and level.
+    stream->set_level(spdlog::level::debug);  // just print messages
     spdlog::set_default_logger(stream);
-    // Logcat will report time, thread, and level. just print message without decoration
-    spdlog::set_pattern("%v");
+    spdlog::info("Device API Level: {}", android_get_device_api_level());
     return version;
+}
+
+void get_field(JNIEnv *env,  //
+               const char *type_name, jobject target, const char *field_name,
+               jlong &ref) {
+    jclass _type = env->FindClass(type_name);
+    jfieldID _field = env->GetFieldID(_type, field_name, "J");  // long
+    ref = env->GetLongField(target, _field);
+}
+void get_field(JNIEnv *env,  //
+               jclass _type, jobject target, const char *field_name,
+               jlong &ref) {
+    jfieldID _field = env->GetFieldID(_type, field_name, "J");  // long
+    ref = env->GetLongField(target, _field);
+}
+void set_field(JNIEnv *env,  //
+               const char *type_name, jobject target, const char *field_name,
+               jlong value) {
+    jclass _type = env->FindClass(type_name);
+    jfieldID _field = env->GetFieldID(_type, field_name, "J");  // long
+    env->SetLongField(target, _field, value);
+}
+void set_field(JNIEnv *env,  //
+               jclass _type, jobject target, const char *field_name,
+               jlong value) {
+    jfieldID _field = env->GetFieldID(_type, field_name, "J");  // long
+    env->SetLongField(target, _field, value);
 }
 
 /**
  * @brief Find exception class information (type info)
- * @return java/lang/RuntimeException
+ * @see java/lang/RuntimeException
  */
-jclass get_runtime_exception(JNIEnv *env) {
-    return env->FindClass("java/lang/RuntimeException");
+void store_runtime_exception(JNIEnv *env, gsl::czstring<> message) {
+    gsl::czstring<> class_name = "java/lang/RuntimeException";
+    jclass _type = env->FindClass(class_name);
+    if (_type == nullptr) return spdlog::error("No Java class: {}", class_name);
+    env->ThrowNew(_type, message);
 }
 
-void get_field(JNIEnv *env, //
-               const char *type_name, jobject target, const char *field_name,
-               jlong &ref) {
-    const jclass _type = env->FindClass(type_name);
-    const jfieldID _field = env->GetFieldID(_type, field_name, "J"); // long
-    ref = env->GetLongField(target, _field);
+jobject make_runnable(JNIEnv *env, coroutine_handle<> task) {
+    jclass _type = env->FindClass("muffin/NativeRunnable");
+    jobject _task = env->AllocObject(_type);
+    set_field(env, _type, _task, "handle",
+              reinterpret_cast<jlong>(task.address()));
+    return _task;
 }
 
-void set_field(JNIEnv *env, //
-               const char *type_name, jobject target, const char *field_name,
-               jlong value) {
-    const jclass _type = env->FindClass(type_name);
-    const jfieldID _field = env->GetFieldID(_type, field_name, "J"); // long
-    env->SetLongField(target, _field, value);
+uint32_t schedule(JNIEnv *env, jobject executor, coroutine_handle<> task) {
+    jclass _type = env->FindClass("java/util/concurrent/Executor");
+    if (_type == nullptr) {
+        spdlog::error("No Java class: {}",  //
+                      "java/util/concurrent/Executor");
+        return EINVAL;
+    }
+    jmethodID _method = env->GetMethodID(_type, "execute",  //
+                                         "(Ljava/lang/Runnable;)V");
+    if (_method == nullptr) {
+        spdlog::error("No Java method: {} {}",  //
+                      "java/util/concurrent/Executor", "execute");
+        return ENOTSUP;
+    }
+    jobject _task = make_runnable(env, task);
+    if (_task == nullptr) {
+        store_runtime_exception(env, "failed to create runnable");
+        return EXIT_FAILURE;
+    }
+    env->CallVoidMethod(executor, _method, _task);
+    return EXIT_SUCCESS;
 }
 
 static_assert(sizeof(void *) <= sizeof(jlong),
@@ -63,46 +102,57 @@ static_assert(sizeof(void *) <= sizeof(jlong),
 
 extern "C" {
 
-jlong Java_muffin_Compass_create(JNIEnv *env, jclass type, jstring _id) {
-    // spdlog::trace(std::string_view{__PRETTY_FUNCTION__});
-    // char name[60]{};
-    // env->GetStringUTFRegion(_id, 0, env->GetStringLength(_id), name);
-    // auto *impl = new compass_t{name};
-    // return reinterpret_cast<jlong>(impl);
-    return 0;
+jboolean Java_muffin_NativeRunnable_resume(JNIEnv *, jclass, void *handle) {
+    spdlog::debug(std::string_view{__PRETTY_FUNCTION__});
+    auto task = coroutine_handle<>::from_address(handle);
+    task.resume();
+    if (task.done()) {
+        task.destroy();
+        return JNI_TRUE;
+    }
+    return JNI_FALSE;  // next run will continue the work
 }
 
-void Java_muffin_Compass_destroy(JNIEnv *env, jclass type, jlong value) {
-    // spdlog::trace(std::string_view{__PRETTY_FUNCTION__});
-    // auto *impl = reinterpret_cast<compass_t *>(value);
-    // delete impl;
+jlong Java_muffin_Renderer1_create(JNIEnv *env, jclass, jobject _executor,
+                                   EGLDisplay egl_display,
+                                   EGLContext egl_context) {
+    spdlog::debug(std::string_view{__PRETTY_FUNCTION__});
+    auto context = std::make_unique<egl_context_t>(egl_display, egl_context);
+    if (context->is_valid() == false) {
+        spdlog::error("context is created but not valid");
+        return 0;
+    }
+    if (auto ec = schedule(env, _executor, noop_coroutine()))
+        spdlog::error("failed to schedule task: {}", ec);
+    return reinterpret_cast<jlong>(context.release());
 }
 
-jint Java_muffin_Compass_update(JNIEnv *env, jclass type, jlong value) {
-    // spdlog::trace(std::string_view{__PRETTY_FUNCTION__});
-    // auto *impl = reinterpret_cast<compass_t *>(value);
-    // return impl->update();
-    return ENOTSUP;
-}
-jint Java_muffin_Compass_resume(JNIEnv *env, jclass type, jlong value) {
-    // spdlog::trace(std::string_view{__PRETTY_FUNCTION__});
-    // auto *impl = reinterpret_cast<compass_t *>(value);
-    // return impl->resume();
-    return ENOTSUP;
-}
-jint Java_muffin_Compass_pause(JNIEnv *env, jclass type, jlong value) {
-    // spdlog::trace(std::string_view{__PRETTY_FUNCTION__});
-    // auto *impl = reinterpret_cast<compass_t *>(value);
-    // return impl->pause();
-    return ENOTSUP;
+void Java_muffin_Renderer1_destroy(JNIEnv *, jclass, egl_context_t *context) {
+    spdlog::debug(std::string_view{__PRETTY_FUNCTION__});
+    delete context;
 }
 
-jstring Java_muffin_Compass_getName(JNIEnv *env, jobject _object) {
+jint Java_muffin_Renderer1_resume(JNIEnv *env, jclass, egl_context_t *context,
+                                  jobject surface) {
+    return context->resume(env, surface);
+}
+jint Java_muffin_Renderer1_suspend(JNIEnv *, jclass, egl_context_t *context) {
+    return context->suspend();
+}
+jint Java_muffin_Renderer1_present(JNIEnv *, jclass, egl_context_t *context) {
+    spdlog::debug(std::string_view{__PRETTY_FUNCTION__});
+    glClearColor(0, 0, 1, 1);
+    glClear(GL_COLOR_BUFFER_BIT);
+    return context->swap();
+}
+
+jstring Java_muffin_Renderer1_toString(JNIEnv *env, jobject _this) {
     jlong value = 0;
-    get_field(env, "muffin/Compass", _object, "impl", value);
-    char buf[20]{};
-    snprintf(buf, 20, "%llx", static_cast<uint64_t>(value));
-    return env->NewStringUTF(buf);
+    get_field(env, "muffin/Renderer1", _this, "ptr", value);
+    constexpr auto cap = 32 - sizeof(jlong);
+    char txt[cap]{};
+    snprintf(txt, cap, "%p", reinterpret_cast<void *>(value));
+    return env->NewStringUTF(txt);
 }
 
-} // extern "C"
+}  // extern "C"

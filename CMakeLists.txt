@@ -46,7 +46,7 @@ message(STATUS "  - stl: ${ANDROID_STL}") # c++_shared
 
 add_library(muffin
     include/muffin.hpp
-    src/libmain.cpp
+    src/muffin.cpp
     src/adapter.h
     src/adapter.cpp
 )
