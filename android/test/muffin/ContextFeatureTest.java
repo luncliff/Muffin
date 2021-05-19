@@ -10,10 +10,10 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.os.Looper;
 import android.util.Log;
+import androidx.core.content.ContextCompat;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.rule.GrantPermissionRule;
 import java.io.File;
-import java.util.concurrent.Executor;
 import org.junit.Rule;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -64,8 +64,7 @@ public class ContextFeatureTest {
 
   @Test
   public void checkExecutor() {
-    Executor executor = context.getMainExecutor();
-    Assertions.assertNotNull(executor);
+    Assertions.assertNotNull(ContextCompat.getMainExecutor(context));
   }
 
   @Test
