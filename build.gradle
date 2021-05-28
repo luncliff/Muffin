@@ -77,7 +77,7 @@ android {
         }
     }
     defaultConfig {
-        minSdkVersion       28
+        minSdkVersion       24
         targetSdkVersion    30
         // https://blog.mikepenz.dev/a/lib-version-name
         // buildConfigField "String", "VERSION_NAME", "\"1.1.3\""
@@ -148,12 +148,12 @@ android {
 
 // https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_configurations_graph
 dependencies {
-    api "androidx.core:core:1.5.0" // todo: add "androidx.core:core-ktx:1.5.0"
-    api "androidx.camera:camera-core:1.0.0"
-    api "androidx.camera:camera-camera2:1.0.0"
-    api "androidx.camera:camera-lifecycle:1.0.0"
     // https://www.geeksforgeeks.org/desugaring-in-android/
     coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:1.1.5"
+    api group: "androidx.core", name: "core", version: "1.5.0"
+    api group: "androidx.camera", name: "camera-core", version: "1.0.0"
+    api group: "androidx.camera", name: "camera-lifecycle", version: "1.0.0"
+    implementation group: "com.linecorp", name: "apng", version: "1.11.0"
     // https://developer.android.com/training/testing/set-up-project#android-test-dependencies
     androidTestImplementation   group: "androidx.test",     name: "core",   version: "1.3.0"
     androidTestImplementation   group: "androidx.test",     name: "rules",  version: "1.3.0"
