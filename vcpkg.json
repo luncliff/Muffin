@@ -5,6 +5,17 @@
     "description": "Template for Android NDK module",
     "dependencies": [
         "ms-gsl",
-        "spdlog"
+        "spdlog",
+        "libjpeg-turbo",
+        "libexif",
+        "cpuinfo",
+        "zlib",
+        {
+            "name": "libwebp",
+            "features": [
+                "simd",
+                "swap16bitcsp"
+            ]
+        }
     ]
 }

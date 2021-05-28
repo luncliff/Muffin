@@ -20,9 +20,16 @@ endif()
 
 find_package(Microsoft.GSL CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
+find_package(unofficial-cpuinfo CONFIG REQUIRED)
+find_package(ZLIB REQUIRED)
+find_package(JPEG REQUIRED)
+find_package(WebP CONFIG REQUIRED)
 
 include(CheckIncludeFileCXX)
 check_include_file_cxx("vulkan/vulkan.h" found_vulkan)
+
+file(DOWNLOAD https://raw.githubusercontent.com/glennrp/libpng/a40189cf881e9f0db80511c382292a5604c3c3d1/pngconf.h include/pngconf.h)
+file(DOWNLOAD https://raw.githubusercontent.com/glennrp/libpng/a40189cf881e9f0db80511c382292a5604c3c3d1/png.h     include/png.h)
 
 # https://developer.android.com/studio/build/native-dependencies?hl=en
 # list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -49,6 +56,7 @@ add_library(muffin
     src/muffin.cpp
     src/adapter.h
     src/adapter.cpp
+    src/image.cpp
 )
 
 # https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html#cross-compiling-for-android-with-the-ndk
@@ -84,14 +92,29 @@ PRIVATE
 target_link_libraries(muffin
 PRIVATE
     ${CMAKE_DL_LIBS} ${ANDROID_STL} m android log 
-    EGL GLESv3 # camera2ndk mediandk vulkan
-    Microsoft.GSL::GSL spdlog::spdlog
+    EGL GLESv3 mediandk
+    Microsoft.GSL::GSL spdlog::spdlog unofficial::cpuinfo::cpuinfo
+    WebP::webp WebP::webpdecoder WebP::webpdemux WebP::libwebpmux
+    ${JPEG_LIBRARIES} ZLIB::ZLIB
 )
+if(ANDROID_PLATFORM_LEVEL GREATER 23)
+    target_link_libraries(muffin
+    PRIVATE
+        vulkan camera2ndk
+    )
+endif()
+find_library(LIBEXIF_PATH NAMES libexif)
+if(LIBEXIF_PATH)
+    target_link_libraries(muffin
+    PRIVATE
+        ${LIBEXIF_PATH}
+    )
+endif()
 
 target_compile_definitions(muffin
 PRIVATE
     AUTHOR_LABEL="luncliff@gmail.com"
-    SPDLOG_NO_TLS
+    SPDLOG_NO_TLS SPDLOG_NO_EXCEPTIONS
 )
 
 if(CMAKE_CXX_COMPILER_ID MATCHES Clang)
