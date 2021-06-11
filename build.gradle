@@ -83,7 +83,7 @@ android {
         // buildConfigField "String", "VERSION_NAME", "\"1.1.3\""
         externalNativeBuild {
             cmake {
-                cppFlags    "-Wall", "-Wextra", "-fno-rtti", "-fno-exceptions"
+                cppFlags    "-Wall", "-Wextra", "-fno-rtti"
                 arguments   "-DANDROID_STL=c++_shared"
                 arguments   "-DBUILD_SHARED_LIBS=true"
                 arguments   "-DCMAKE_TOOLCHAIN_FILE=${vcpkg_toolchain_file}"

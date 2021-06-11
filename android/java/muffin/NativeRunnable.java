@@ -1,7 +1,5 @@
 package muffin;
 
-import android.util.Log;
-
 class NativeRunnable implements Runnable {
   static {
     System.loadLibrary("c++_shared");
@@ -14,9 +12,9 @@ class NativeRunnable implements Runnable {
   public void run() {
     if (handle == 0)
       return;
-    if (resume(handle) == true)
-      return;
-    handle = 0;
+    final boolean finished = resume(handle);
+    if (finished)
+      handle = 0;
   }
   private native boolean resume(long handle);
 }

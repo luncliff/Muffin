@@ -69,16 +69,13 @@ public class RendererSurfaceTest implements ImageReader.OnImageAvailableListener
     ImageReader reader = ImageReader.newInstance(400, 400, PixelFormat.RGB_888, 3);
     reader.setOnImageAvailableListener(this, Handler.createAsync(context.getMainLooper()));
     // this format is NOT supported. expect error code 95
-    Assertions.assertEquals(95, renderer.resume(reader.getSurface()));
-    // Assertions.assertEquals(0, renderer.resume(reader.getSurface()));
-    // for (int i = 0; i < 4; i++) Assertions.assertEquals(0, renderer.present());
-    // Assertions.assertEquals(0, renderer.suspend());
+    Assertions.assertThrows(RuntimeException.class, () -> renderer.resume(reader.getSurface()));
   }
   @Test
   public void test_RGB_565() {
     ImageReader reader = ImageReader.newInstance(400, 400, PixelFormat.RGB_565, 3);
     reader.setOnImageAvailableListener(this, Handler.createAsync(context.getMainLooper()));
     // this format is NOT supported. expect error code 95
-    Assertions.assertEquals(95, renderer.resume(reader.getSurface()));
+    Assertions.assertThrows(RuntimeException.class, () -> renderer.resume(reader.getSurface()));
   }
 }

@@ -2,15 +2,20 @@
  * @file    adapter.cpp
  * @author  github.com/luncliff (luncliff@gmail.com)
  */
-#include "adapter.h"
-
+#include <android/api-level.h>
+#include <android/hardware_buffer.h>
+#include <android/native_window_jni.h>
+#include <android/sensor.h>
+#include <media/NdkImage.h>
+#include <media/NdkImageReader.h>
 #include <spdlog/sinks/android_sink.h>
 #include <spdlog/spdlog.h>
 
 #include <chrono>
-#include <gsl/gsl>
 #include <string>
 #include <string_view>
+
+#include "muffin.hpp"
 
 using namespace std::experimental;
 
@@ -30,27 +35,27 @@ extern "C" jint JNI_OnLoad(JavaVM *vm, void *) {
 
 void get_field(JNIEnv *env,  //
                const char *type_name, jobject target, const char *field_name,
-               jlong &ref) {
+               jlong &ref) noexcept {
     jclass _type = env->FindClass(type_name);
     jfieldID _field = env->GetFieldID(_type, field_name, "J");  // long
     ref = env->GetLongField(target, _field);
 }
 void get_field(JNIEnv *env,  //
                jclass _type, jobject target, const char *field_name,
-               jlong &ref) {
+               jlong &ref) noexcept {
     jfieldID _field = env->GetFieldID(_type, field_name, "J");  // long
     ref = env->GetLongField(target, _field);
 }
 void set_field(JNIEnv *env,  //
                const char *type_name, jobject target, const char *field_name,
-               jlong value) {
+               jlong value) noexcept {
     jclass _type = env->FindClass(type_name);
     jfieldID _field = env->GetFieldID(_type, field_name, "J");  // long
     env->SetLongField(target, _field, value);
 }
 void set_field(JNIEnv *env,  //
                jclass _type, jobject target, const char *field_name,
-               jlong value) {
+               jlong value) noexcept {
     jfieldID _field = env->GetFieldID(_type, field_name, "J");  // long
     env->SetLongField(target, _field, value);
 }
@@ -59,14 +64,14 @@ void set_field(JNIEnv *env,  //
  * @brief Find exception class information (type info)
  * @see java/lang/RuntimeException
  */
-void store_runtime_exception(JNIEnv *env, gsl::czstring<> message) {
+void store_runtime_exception(JNIEnv *env, gsl::czstring<> message) noexcept {
     gsl::czstring<> class_name = "java/lang/RuntimeException";
     jclass _type = env->FindClass(class_name);
     if (_type == nullptr) return spdlog::error("No Java class: {}", class_name);
     env->ThrowNew(_type, message);
 }
 
-jobject make_runnable(JNIEnv *env, coroutine_handle<> task) {
+jobject make_runnable(JNIEnv *env, coroutine_handle<> task) noexcept {
     jclass _type = env->FindClass("muffin/NativeRunnable");
     jobject _task = env->AllocObject(_type);
     set_field(env, _type, _task, "handle",
@@ -74,7 +79,8 @@ jobject make_runnable(JNIEnv *env, coroutine_handle<> task) {
     return _task;
 }
 
-uint32_t schedule(JNIEnv *env, jobject executor, coroutine_handle<> task) {
+uint32_t schedule(JNIEnv *env, jobject executor,
+                  coroutine_handle<> task) noexcept {
     jclass _type = env->FindClass("java/util/concurrent/Executor");
     if (_type == nullptr) {
         spdlog::error("No Java class: {}",  //
@@ -102,7 +108,8 @@ static_assert(sizeof(void *) <= sizeof(jlong),
 
 extern "C" {
 
-jboolean Java_muffin_NativeRunnable_resume(JNIEnv *, jclass, void *handle) {
+jboolean Java_muffin_NativeRunnable_resume(JNIEnv *, jobject,
+                                           void *handle) noexcept {
     spdlog::debug(std::string_view{__PRETTY_FUNCTION__});
     auto task = coroutine_handle<>::from_address(handle);
     task.resume();
@@ -113,12 +120,12 @@ jboolean Java_muffin_NativeRunnable_resume(JNIEnv *, jclass, void *handle) {
     return JNI_FALSE;  // next run will continue the work
 }
 
-jlong Java_muffin_Renderer1_create(JNIEnv *env, jclass, jobject _executor,
-                                   EGLDisplay egl_display,
-                                   EGLContext egl_context) {
+jlong Java_muffin_Renderer1_create1(JNIEnv *env, jclass, jobject _executor,
+                                    EGLDisplay egl_display,
+                                    EGLContext egl_context) noexcept {
     spdlog::debug(std::string_view{__PRETTY_FUNCTION__});
     auto context = std::make_unique<egl_context_t>(egl_display, egl_context);
-    if (context->is_valid() == false) {
+    if (context->handle() == EGL_NO_CONTEXT) {
         spdlog::error("context is created but not valid");
         return 0;
     }
@@ -127,26 +134,48 @@ jlong Java_muffin_Renderer1_create(JNIEnv *env, jclass, jobject _executor,
     return reinterpret_cast<jlong>(context.release());
 }
 
-void Java_muffin_Renderer1_destroy(JNIEnv *, jclass, egl_context_t *context) {
+void Java_muffin_Renderer1_destroy1(JNIEnv *, jclass,
+                                    egl_context_t *context) noexcept {
     spdlog::debug(std::string_view{__PRETTY_FUNCTION__});
     delete context;
 }
 
-jint Java_muffin_Renderer1_resume(JNIEnv *env, jclass, egl_context_t *context,
-                                  jobject surface) {
-    return context->resume(env, surface);
+jlong Java_muffin_Renderer1_create2(JNIEnv *env, jclass, egl_context_t *context,
+                                    jobject _surface, jobject) noexcept {
+    spdlog::debug(std::string_view{__PRETTY_FUNCTION__});
+    try {
+        auto surface = make_egl_surface(context->get_display(), env, _surface);
+        return reinterpret_cast<jlong>(surface.release());
+    } catch (const std::exception &ex) {
+        store_runtime_exception(env, ex.what());
+        return 0;
+    }
 }
-jint Java_muffin_Renderer1_suspend(JNIEnv *, jclass, egl_context_t *context) {
+
+void Java_muffin_Renderer1_destroy2(JNIEnv *, jclass,
+                                    egl_surface_t *surface) noexcept {
+    spdlog::debug(std::string_view{__PRETTY_FUNCTION__});
+    delete surface;
+}
+
+jint Java_muffin_Renderer1_resume(JNIEnv *, jclass, egl_context_t *context,
+                                  egl_surface_t *surface) noexcept {
+    return context->resume(surface->handle());
+}
+
+jint Java_muffin_Renderer1_suspend(JNIEnv *, jclass, egl_context_t *context,
+                                   jobject) noexcept {
     return context->suspend();
 }
-jint Java_muffin_Renderer1_present(JNIEnv *, jclass, egl_context_t *context) {
+jint Java_muffin_Renderer1_present(JNIEnv *, jclass,
+                                   egl_context_t *context) noexcept {
     spdlog::debug(std::string_view{__PRETTY_FUNCTION__});
     glClearColor(0, 0, 1, 1);
     glClear(GL_COLOR_BUFFER_BIT);
     return context->swap();
 }
 
-jstring Java_muffin_Renderer1_toString(JNIEnv *env, jobject _this) {
+jstring Java_muffin_Renderer1_toString(JNIEnv *env, jobject _this) noexcept {
     jlong value = 0;
     get_field(env, "muffin/Renderer1", _this, "ptr", value);
     constexpr auto cap = 32 - sizeof(jlong);

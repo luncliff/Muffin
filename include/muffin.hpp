@@ -29,102 +29,78 @@ static_assert(__cplusplus >= 201703L, "requires C++ 17 or later");
 #include <experimental/coroutine>
 // clang-format off
 #if __has_include(<vulkan/vulkan.h>)
+#  define VK_USE_PLATFORM_ANDROID_KHR
 #  include <vulkan/vulkan.h>
 #endif
-#if __has_include(<GLES3/gl3.h>)
-#  include <GLES3/gl3.h>
-#  if __has_include(<GLES3/gl31.h>)
-#    include <GLES3/gl31.h>
-#  endif
-#  include <EGL/egl.h>
-#  include <EGL/eglext.h>
+#include <GLES3/gl3.h>
+#if __has_include(<GLES3/gl31.h>)
+#  include <GLES3/gl31.h>
 #endif
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+#include <EGL/eglext_angle.h>
 // clang-format on
 #if !defined(__ANDROID__) || !defined(__ANDROID_API__)
 #error "requries __ANDROID__ and __ANDROID_API__"
 #endif
 #include <android/native_window_jni.h>
 
-/**
- * @brief `EGLContext` and `EGLSurface` owner.
- *        Bind/unbind with `EGLNativeWindowType` using `resume`/`suspend` 
- * @see   https://www.saschawillems.de/blog/2015/04/19/using-opengl-es-on-windows-desktops-via-egl/
- */
+#include <gsl/gsl>
+
+class _INTERFACE_ egl_surface_t final {
+    EGLDisplay display;
+    EGLConfig config;
+    gsl::owner<EGLSurface> surface = EGL_NO_SURFACE;
+    gsl::owner<EGLNativeWindowType> window = nullptr;
+
+   public:
+    egl_surface_t(EGLDisplay display, EGLConfig config,
+                  gsl::not_null<EGLSurface> surface,
+                  EGLNativeWindowType window = nullptr) noexcept;
+    ~egl_surface_t() noexcept;
+    egl_surface_t(egl_surface_t const &) = delete;
+    egl_surface_t &operator=(egl_surface_t const &) = delete;
+    egl_surface_t(egl_surface_t &&) = delete;
+    egl_surface_t &operator=(egl_surface_t &&) = delete;
+
+    EGLSurface handle() const noexcept;
+    EGLConfig get_config() const noexcept;
+    uint32_t get_size(EGLint &width, EGLint &height) const noexcept;
+};
+
+_INTERFACE_
+std::unique_ptr<egl_surface_t> make_egl_surface(EGLDisplay display,  //
+                                                EGLint width,
+                                                EGLint height) noexcept(false);
+
+_INTERFACE_
+std::unique_ptr<egl_surface_t> make_egl_surface(
+    EGLDisplay display,  //
+    JNIEnv *_env, jobject _surface) noexcept(false);
+
 class _INTERFACE_ egl_context_t final {
    private:
     EGLDisplay display = EGL_NO_DISPLAY;  // EGL_NO_DISPLAY when `terminate`d
     EGLint version[2]{};                  // major, minor
     EGLContext context = EGL_NO_CONTEXT;
-    EGLConfig configs[4]{};               // default, rgb565, rgb24, rgba32
     EGLSurface surface = EGL_NO_SURFACE;  // EGLSurface for Draw/Read
-    std::unique_ptr<ANativeWindow, void (*)(ANativeWindow *)> window{nullptr,
-                                                                     nullptr};
+    EGLConfig configs[2]{};
 
    public:
-    /**
-     * @brief Acquire EGLDisplay and create an EGLContext for OpenGL ES 3.0+
-     * 
-     * @see eglInitialize https://www.khronos.org/registry/EGL/sdk/docs/man/html/eglInitialize.xhtml
-     * @see eglChooseConfig
-     * @see eglCreateContext
-     */
     egl_context_t(EGLDisplay display, EGLContext share_context) noexcept;
-    /**
-     * @see suspend
-     */
     ~egl_context_t() noexcept;
     egl_context_t(egl_context_t const &) = delete;
     egl_context_t &operator=(egl_context_t const &) = delete;
     egl_context_t(egl_context_t &&) = delete;
     egl_context_t &operator=(egl_context_t &&) = delete;
 
-    /**
-     * @brief EGLContext == NULL?
-     * @details It is recommended to invoke this function to check whether the construction was successful.
-     *          Notice that the constructor is `noexcept`.
-     */
-    bool is_valid() const noexcept;
+    EGLContext handle() const noexcept;
+    EGLDisplay get_display() const noexcept;
+    EGLConfig get_config(EGLNativeWindowType window) const noexcept;
 
-    /**
-     * @brief Destroy all EGL bindings and resources
-     * @note This functions in invoked in the destructor
-     * @post is_valid() == false
-     * 
-     * @see eglMakeCurrent
-     * @see eglDestroyContext
-     * @see eglDestroySurface
-     * @see eglTerminate(unused) https://www.khronos.org/registry/EGL/sdk/docs/man/html/eglTerminate.xhtml
-     */
+    EGLint resume(EGLSurface surface) noexcept;
+    EGLint suspend() noexcept;
     void destroy() noexcept;
 
-    /**
-     * @brief   Take ownership of the given EGLSurface
-     * 
-     * @param es_surface  Expect PBufferSurface.
-     * @param es_config   Hint to prevent misuse of `resume(EGLNativeWindowType)`. 
-     *                    Always ignored. 
-     */
-    EGLint resume(EGLSurface es_surface, EGLConfig es_config) noexcept;
-    EGLint resume(JNIEnv *env, jobject surface) noexcept;
-
-    /**
-     * @brief   Unbind EGLSurface and EGLContext.
-     * 
-     * @return EGLint   `0` if successful. Redirected from `eglGetError`. 
-     *                  `EGL_NOT_INITIALIZED` if `terminate` is invoked.
-     * @see eglMakeCurrent
-     * @see eglDestroySurface
-     */
-    EGLint suspend() noexcept;
-
-    /**
-     * @brief   Try to swap front/back buffer. 
-     * @note    This function invokes `terminate` if EGL_BAD_CONTEXT/EGL_CONTEXT_LOST.
-     * @return  EGLint  `0` if successful. Redirected from `eglGetError`. 
-     * @see eglSwapBuffers
-     * @see terminate
-     */
-    EGLint swap() noexcept;
-
-    EGLContext handle() const noexcept;
+    uint32_t swap() noexcept;
 };
