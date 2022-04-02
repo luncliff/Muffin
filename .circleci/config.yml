@@ -1,0 +1,16 @@
+# https://circleci.com/developer/images/image/cimg/android
+# https://circleci.com/docs/2.0/language-android/#sample-configuration-for-ui-tests
+version: 2.1
+
+orbs:
+  # https://circleci.com/developer/orbs/orb/circleci/android
+  android: circleci/android@1.0
+
+jobs:
+  build:
+    docker:
+      - image: cimg/android:2022.3.1
+    steps:
+      - checkout
+      - run: gradle androidDependencies
+      - run: gradle lint test
