@@ -3,8 +3,8 @@
 # See https://github.com/microsoft/vcpkg/blob/master/docs/examples/vcpkg_android_example_cmake_script/CMakeLists.txt
 #
 cmake_minimum_required(VERSION 3.21)
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
-include(vcpkg_android)
+# VCPKG_TARGET_TRIPLET is required
+include(${CMAKE_CURRENT_SOURCE_DIR}/scripts/vcpkg_android.cmake)
 
 project(muffin LANGUAGES CXX VERSION 1.2.0)
 if(NOT ANDROID)

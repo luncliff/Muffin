@@ -26,15 +26,19 @@ jobs:
             sudo rsync -r ./cmake-3.23.1-linux-x86_64/ /usr/local
             rm -rf cmake-3.23.1-linux-x86_64
             cmake --version
+            ninja --version
       - android/install-ndk:
           version: 23.1.7779620
       - run:
-          name: "Setup local.properties"
+          name: "Create local.properties"
           command: |
             touch local.properties
             tree -L 1 /opt/android/sdk/ndk/23.1.7779620
             tree -L 1 $HOME/android-sdk/ndk/23.1.7779620
-            echo "ndk.dir=$HOME/android-sdk/ndk/23.1.7779620" >> local.properties
+            export NDK_PATH=$HOME/android-sdk/ndk/23.1.7779620
+            # override the wrong path
+            echo "export ANDROID_NDK_HOME=${NDK_PATH}" >> $BASH_ENV
+            echo "ndk.dir=${NDK_PATH}" >> local.properties
             cat local.properties
       - run: 
           name: "Setup Vcpkg"
@@ -51,6 +55,9 @@ jobs:
       - run: 
           name: "Gradle: androidDependencies"
           command: ./gradlew androidDependencies
+      - run: 
+          name: "Gradle: assemble"
+          command: ./gradlew assemble --info
       - run: 
           name: "Gradle: lint"
           command: ./gradlew lint

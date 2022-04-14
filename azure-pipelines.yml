@@ -83,17 +83,17 @@ jobs:
           checkStyleRunAnalysis: true
           gradleOptions: "-Xmx3072m"
           jdkVersionOption: 1.11
-          tasks: "assemble"
+          tasks: "assemble assembleAndroidTest"
           options: "--warning-mode all"
         displayName: "Gradle: assemble"
-      - task: Gradle@2
-        inputs:
-          gradleWrapperFile: "gradlew"
-          publishJUnitResults: true
-          jdkVersionOption: 1.11
-          testResultsFiles: '**/TEST-*.xml'
-          tasks: "connectedAndroidTest createDebugCoverageReport"
-        displayName: "Gradle: connectedAndroidTest"
+      # - task: Gradle@2
+      #   inputs:
+      #     gradleWrapperFile: "gradlew"
+      #     publishJUnitResults: true
+      #     jdkVersionOption: 1.11
+      #     testResultsFiles: '**/TEST-*.xml'
+      #     tasks: "connectedAndroidTest createDebugCoverageReport"
+      #   displayName: "Gradle: connectedAndroidTest"
 
       - task: CopyFiles@2
         inputs:
