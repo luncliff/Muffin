@@ -1,20 +1,15 @@
-//
-//  Author:  github.com/luncliff (luncliff@gmail.com)
-//
 import java.nio.file.Paths
+
 buildscript {
     repositories {
         google()
         mavenCentral()
-        // jcenter() // see https://github.com/gradle/gradle/issues/16018
     }
     dependencies {
-        // https://developer.android.com/studio/releases/gradle-plugin#4-0-0
-        // expect Gradle 6.7.1+
-        classpath("com.android.tools.build:gradle:4.1.3")
+        // https://developer.android.com/studio/releases/gradle-plugin
+        classpath("com.android.tools.build:gradle:7.1.2")
         // https://github.com/mannodermaus/android-junit5
-        classpath("de.mannodermaus.gradle.plugins:android-junit5:1.7.1.1")
-        // classpath("org.jacoco:org.jacoco.core:0.8.5")
+        classpath("de.mannodermaus.gradle.plugins:android-junit5:1.8.2.0")
     }
 }
 
@@ -24,10 +19,8 @@ buildscript {
 repositories {
     google()
     mavenCentral()
-    maven { url "https://jitpack.io" }
+    // maven { url "https://jitpack.io" }
 }
-
-println "Project: ${project.buildDir}"
 
 def vcpkg_root = Paths.get(System.getenv("VCPKG_ROOT")).toAbsolutePath()
 def vcpkg_toolchain_file = Paths.get(vcpkg_root.toString(), "scripts", "buildsystems", "vcpkg.cmake")
@@ -37,10 +30,10 @@ def ndk_root = Paths.get(System.getenv("ANDROID_NDK_HOME")).toAbsolutePath()
 def ndk_toolchain_file = Paths.get(ndk_root.toString(), "build", "cmake", "android.toolchain.cmake")
 println("Using NDK: ${ndk_toolchain_file}")
 
-// apply plugin: "org.sonarqube"
+apply plugin: "org.sonarqube"
 
-// https://snowdeer.github.io/android/2019/07/04/how-to-use-jacoco-plugin/
-// https://blog.gouline.net/code-coverage-on-android-with-jacoco-92ec90c9355e
+// todo: https://snowdeer.github.io/android/2019/07/04/how-to-use-jacoco-plugin/
+// todo: https://blog.gouline.net/code-coverage-on-android-with-jacoco-92ec90c9355e
 // apply plugin: "jacoco"
 // jacoco {
 //     toolVersion = "0.8.5"
@@ -48,21 +41,20 @@ println("Using NDK: ${ndk_toolchain_file}")
 
 apply plugin: "com.android.library"
 android {
-    compileSdkVersion 30
-    buildToolsVersion "30.0.3"
+    compileSdkVersion 32
+    buildToolsVersion "32.0.0"
     compileOptions {
-        coreLibraryDesugaringEnabled true
+        // coreLibraryDesugaringEnabled true
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-    ndkVersion "22.1.7171670" // or "21.3.6528147"
+    ndkVersion "23.1.7779620"
     // https://developer.android.com/studio/build/configure-apk-splits#configure-abi-split
     splits {
         abi {
             enable true
             reset()
             include "armeabi-v7a", "arm64-v8a", "x86_64"
-            exclude "armeabi"
         }
     }
     buildTypes {
@@ -77,10 +69,10 @@ android {
         }
     }
     defaultConfig {
-        minSdkVersion       24
-        targetSdkVersion    30
+        minSdkVersion       26
+        targetSdkVersion    32
         // https://blog.mikepenz.dev/a/lib-version-name
-        // buildConfigField "String", "VERSION_NAME", "\"1.1.3\""
+        // buildConfigField "String", "VERSION_NAME", "\"1.2.0\""
         externalNativeBuild {
             cmake {
                 cppFlags    "-Wall", "-Wextra", "-fno-rtti"
@@ -97,7 +89,7 @@ android {
     }
     externalNativeBuild {
         cmake {
-            version "3.13.0+"
+            version "3.21.0+"
             path    "CMakeLists.txt"
         }
     }
@@ -111,9 +103,6 @@ android {
             java.srcDir "android/test"
             assets.srcDir "android/testAssets"
         }
-        // https://developer.android.com/studio/releases/gradle-plugin#cmake-imported-targets
-        main.jniLibs.srcDirs = ["jniLibs"]
-        androidTest.jniLibs.srcDirs = ["android/jniLibs"]
     }
     buildFeatures {
         buildConfig = true
@@ -121,9 +110,7 @@ android {
         prefabPublishing true
     }
     prefab {
-        muffin {
-            headers "include"
-        }
+        muffin.headers "include"
     }
     packagingOptions {
         // pickFirst "jniLibs/**/*.so"
@@ -149,12 +136,8 @@ android {
 // https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_configurations_graph
 dependencies {
     // https://www.geeksforgeeks.org/desugaring-in-android/
-    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:1.1.5"
+    // coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:1.1.5"
     api group: "androidx.core", name: "core", version: "1.5.0"
-    api group: "androidx.camera", name: "camera-core", version: "1.0.0"
-    api group: "androidx.camera", name: "camera-camera2", version: "1.0.0"
-    api group: "androidx.camera", name: "camera-lifecycle", version: "1.0.0"
-    implementation group: "com.linecorp", name: "apng", version: "1.11.0"
     // https://developer.android.com/training/testing/set-up-project#android-test-dependencies
     androidTestImplementation   group: "androidx.test",     name: "core",   version: "1.3.0"
     androidTestImplementation   group: "androidx.test",     name: "rules",  version: "1.3.0"
@@ -188,13 +171,13 @@ afterEvaluate {
             release(MavenPublication) {
                 from components.release
                 groupId = "org.luncliff"
-                version = "1.1.3-SNAPSHOT"
+                version = "1.2.0-SNAPSHOT"
                 artifactId = "muffin"
             }
             debug(MavenPublication) {
                 from components.debug
                 groupId = "org.luncliff"
-                version = "1.1.3-SNAPSHOT"
+                version = "1.2.0-SNAPSHOT"
                 artifactId = "muffin-debug"
             }
         }

@@ -1,13 +1,24 @@
-#
-# References
-#   - https://docs.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=azure-devops
-#
+
+trigger:
+  branches:
+    exclude:
+      - docs
+      - gh-pages
+
+schedules:
+  - cron: "0 3 * * 0"
+    displayName: "Weekly Build"
+    branches:
+      include:
+        - master
+    always: true
+
 variables:
   VCPKG_FEATURE_FLAGS: "versions,manifests,registries,binarycaching"
   GRADLE_USER_HOME: $(Pipeline.Workspace)/.gradle
 
 jobs:
-  - job: build_check_0
+  - job: build_gradle
     pool:
       vmImage: "macOS-latest"
     variables:
@@ -16,29 +27,26 @@ jobs:
       ANDROID_NDK_HOME: "/Users/runner/Library/Android/sdk/ndk/22.1.7171670" # see scripts/azure-pipelines.sh, check $ANDROID_SDK_ROOT
     steps:
       - checkout: self
-      - script: env
-        displayName: "Report: Environment Variables"
-      - task: CmdLine@2
-        inputs:
-          script: |
-            brew install ninja
-            brew install tree
-            pushd ${VCPKG_ROOT}
-              mkdir -p ${VCPKG_DEFAULT_BINARY_CACHE}
-              pushd triplets/community
-                wget https://raw.githubusercontent.com/luncliff/vcpkg-registry/main/triplets/arm64-android.cmake
-                wget https://raw.githubusercontent.com/luncliff/vcpkg-registry/main/triplets/arm-android.cmake
-                wget https://raw.githubusercontent.com/luncliff/vcpkg-registry/main/triplets/x64-android.cmake
-              popd
-              tree -L 2 $(pwd)/triplets
-            popd
-        displayName: "Setup: Homebrew/Vcpkg"
-      - task: CmdLine@2
-        inputs:
-          script: |
-            brew uninstall cmake
-            bash ./scripts/azure-pipelines.sh > /dev/null
+      - powershell: |
+          brew install ninja
+          brew install tree
+        displayName: "Setup: Homebrew"
+      - powershell: |
+          Push-Location ${VCPKG_ROOT}
+            mkdir -p ${VCPKG_DEFAULT_BINARY_CACHE}
+            Push-Location triplets/community
+              wget https://raw.githubusercontent.com/luncliff/vcpkg-registry/0.2210.0/triplets/arm64-android.cmake
+              wget https://raw.githubusercontent.com/luncliff/vcpkg-registry/0.2210.0/triplets/arm-android.cmake
+              wget https://raw.githubusercontent.com/luncliff/vcpkg-registry/0.2210.0/triplets/x64-android.cmake
+            Pop-Location
+            tree -L 2 $(pwd)/triplets
+          Pop-Location
+        displayName: "Setup: Vcpkg"
+      - bash: ./scripts/azure-pipelines.sh
         displayName: "Setup: Android SDK / AVD"
+      - bash: |
+          echo "cmake.dir=$(dirname $(which cmake))" >> local.properties
+        displayName: "Setup: local.properties"
       - task: Cache@2
         inputs:
           key: 'vcpkg-android | "$(Agent.OS)"'
@@ -55,11 +63,7 @@ jobs:
             gradle | "$(Agent.OS)"
             $(Agent.OS)
         displayName: "Cache: Gradle"
-      - task: CmdLine@2
-        inputs:
-          script: |
-            gradle --version
-            gradle wrapper
+      - powershell: gradle wrapper
         displayName: "Gradle: wrapper"
       - task: Gradle@2
         inputs:
@@ -99,21 +103,3 @@ jobs:
           testResultsFiles: '**/TEST-*.xml'
           tasks: "connectedAndroidTest createDebugCoverageReport"
         displayName: "Gradle: connectedAndroidTest"
-
-trigger:
-  branches:
-    exclude:
-      - docs
-      - gh-pages
-
-schedules:
-  - cron: "0 3 * * 0"
-    displayName: "Weekly Build"
-    branches:
-      include:
-        - master
-        - support/*
-      exclude:
-        - docs
-        - gh-pages
-    always: true
