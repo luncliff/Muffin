@@ -30,15 +30,6 @@ def ndk_root = Paths.get(System.getenv("ANDROID_NDK_HOME")).toAbsolutePath()
 def ndk_toolchain_file = Paths.get(ndk_root.toString(), "build", "cmake", "android.toolchain.cmake")
 println("Using NDK: ${ndk_toolchain_file}")
 
-apply plugin: "org.sonarqube"
-
-// todo: https://snowdeer.github.io/android/2019/07/04/how-to-use-jacoco-plugin/
-// todo: https://blog.gouline.net/code-coverage-on-android-with-jacoco-92ec90c9355e
-// apply plugin: "jacoco"
-// jacoco {
-//     toolVersion = "0.8.5"
-// }
-
 apply plugin: "com.android.library"
 android {
     compileSdkVersion 32
@@ -104,6 +95,7 @@ android {
             assets.srcDir "android/testAssets"
         }
     }
+    // https://developer.android.com/studio/build/native-dependencies?hl=en
     buildFeatures {
         buildConfig = true
         prefab true

@@ -5,7 +5,6 @@
 #include <android/api-level.h>
 #include <android/hardware_buffer.h>
 #include <android/native_window_jni.h>
-#include <android/sensor.h>
 #include <media/NdkImage.h>
 #include <media/NdkImageReader.h>
 #include <spdlog/sinks/android_sink.h>
@@ -64,8 +63,8 @@ void set_field(JNIEnv *env,  //
  * @brief Find exception class information (type info)
  * @see java/lang/RuntimeException
  */
-void store_runtime_exception(JNIEnv *env, gsl::czstring<> message) noexcept {
-    gsl::czstring<> class_name = "java/lang/RuntimeException";
+void store_runtime_exception(JNIEnv *env, gsl::czstring message) noexcept {
+    gsl::czstring class_name = "java/lang/RuntimeException";
     jclass _type = env->FindClass(class_name);
     if (_type == nullptr) return spdlog::error("No Java class: {}", class_name);
     env->ThrowNew(_type, message);

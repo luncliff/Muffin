@@ -2,7 +2,8 @@
 .idea
 .vscode
 
-build*
+cmake-*
+build-*
 gradle/
 gradle*
 

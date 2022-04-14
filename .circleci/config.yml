@@ -4,13 +4,53 @@ version: 2.1
 
 orbs:
   # https://circleci.com/developer/orbs/orb/circleci/android
-  android: circleci/android@1.0
+  android: circleci/android@2.0.3
 
 jobs:
   build:
     docker:
-      - image: cimg/android:2022.3.1
+      - image: cimg/android:2022.03-ndk
+    # https://circleci.com/docs/2.0/env-vars
+    environment:
+      VCPKG_ROOT: /home/circleci/project/vcpkg
     steps:
       - checkout
-      - run: gradle androidDependencies
-      - run: gradle lint test
+      - run: 
+          name: "Install APT packages"
+          command: |
+            sudo apt-get update -y
+            sudo apt-get install -y --fix-missing ninja-build tree curl zip unzip tar rsync
+            sudo apt remove --purge --auto-remove cmake
+            wget -q https://github.com/Kitware/CMake/releases/download/v3.23.1/cmake-3.23.1-linux-x86_64.tar.gz
+            tar -x -f cmake-3.23.1-linux-x86_64.tar.gz
+            sudo rsync -r ./cmake-3.23.1-linux-x86_64/ /usr/local
+            rm -rf cmake-3.23.1-linux-x86_64
+            cmake --version
+      - android/install-ndk:
+          version: 23.1.7779620
+      - run:
+          name: "Setup local.properties"
+          command: |
+            touch local.properties
+            tree -L 1 /opt/android/sdk/ndk/23.1.7779620
+            tree -L 1 $HOME/android-sdk/ndk/23.1.7779620
+            echo "ndk.dir=$HOME/android-sdk/ndk/23.1.7779620" >> local.properties
+            cat local.properties
+      - run: 
+          name: "Setup Vcpkg"
+          command: |
+            git clone --branch=2022.02.23 --depth=1 https://github.com/microsoft/vcpkg
+            pushd vcpkg
+              ./bootstrap-vcpkg.sh
+            popd
+            export VCPKG_ROOT=~/project/vcpkg
+            tree -L 1 ${VCPKG_ROOT}
+      - run:
+          name: "Gradle: wrapper"
+          command: gradle wrapper --info
+      - run: 
+          name: "Gradle: androidDependencies"
+          command: ./gradlew androidDependencies
+      - run: 
+          name: "Gradle: lint"
+          command: ./gradlew lint

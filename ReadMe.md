@@ -1,10 +1,9 @@
 # Muffin
 
-[![Build Status](https://dev.azure.com/luncliff/personal/_apis/build/status/luncliff.Muffin?branchName=master)](https://dev.azure.com/luncliff/personal/_build/latest?definitionId=34&branchName=master) [![Build Status](https://travis-ci.org/luncliff/Muffin.svg?branch=master)](https://travis-ci.org/luncliff/Muffin)
+[![Build Status](https://dev.azure.com/luncliff/personal/_apis/build/status/luncliff.Muffin?branchName=master)](https://dev.azure.com/luncliff/personal/_build/latest?definitionId=34&branchName=master)
+[![CircleCI](https://circleci.com/gh/luncliff/Muffin/tree/master.svg?style=shield)](https://circleci.com/gh/luncliff/Muffin/tree/master)
 
 Template for Android NDK module
-
-* API level: 28+
 
 ### References
 

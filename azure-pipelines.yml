@@ -14,64 +14,57 @@ schedules:
     always: true
 
 variables:
-  VCPKG_FEATURE_FLAGS: "versions,manifests,registries,binarycaching"
-  GRADLE_USER_HOME: $(Pipeline.Workspace)/.gradle
+  - name: VCPKG_COMMIT
+    value: "b86c0c35b88e2bf3557ff49dc831689c2f085090" # mainstream 2022.02.23
+  - name: VCPKG_FEATURE_FLAGS
+    value: "versions,manifests,registries,binarycaching"
+  - name: VCPKG_DEFAULT_BINARY_CACHE
+    value: $(Build.BinariesDirectory)/vcpkg-caches
+  - name: GRADLE_USER_HOME
+    value: $(Pipeline.Workspace)/.gradle
 
 jobs:
   - job: build_gradle
     pool:
-      vmImage: "macOS-latest"
+      vmImage: "macOS-11"
     variables:
-      VCPKG_ROOT: "/usr/local/share/vcpkg" # check $VCPKG_INSTALLATION_ROOT
-      VCPKG_DEFAULT_BINARY_CACHE: /usr/local/share/vcpkg/archives
-      ANDROID_NDK_HOME: "/Users/runner/Library/Android/sdk/ndk/22.1.7171670" # see scripts/azure-pipelines.sh, check $ANDROID_SDK_ROOT
+      VCPKG_ROOT: "/usr/local/share/vcpkg" # see VCPKG_INSTALLATION_ROOT
+      ANDROID_NDK_HOME: "/Users/runner/Library/Android/sdk/ndk/23.1.7779620" # see scripts/azure-pipelines.sh, check $ANDROID_SDK_ROOT
     steps:
       - checkout: self
-      - powershell: |
-          brew install ninja
-          brew install tree
-        displayName: "Setup: Homebrew"
-      - powershell: |
-          Push-Location ${VCPKG_ROOT}
-            mkdir -p ${VCPKG_DEFAULT_BINARY_CACHE}
-            Push-Location triplets/community
-              wget https://raw.githubusercontent.com/luncliff/vcpkg-registry/0.2210.0/triplets/arm64-android.cmake
-              wget https://raw.githubusercontent.com/luncliff/vcpkg-registry/0.2210.0/triplets/arm-android.cmake
-              wget https://raw.githubusercontent.com/luncliff/vcpkg-registry/0.2210.0/triplets/x64-android.cmake
-            Pop-Location
-            tree -L 2 $(pwd)/triplets
-          Pop-Location
-        displayName: "Setup: Vcpkg"
-      - bash: ./scripts/azure-pipelines.sh
-        displayName: "Setup: Android SDK / AVD"
+
+      - powershell: brew install ninja tree
+        displayName: "Install Homebrew packages"
       - bash: |
-          echo "cmake.dir=$(dirname $(which cmake))" >> local.properties
-        displayName: "Setup: local.properties"
+          bash ./scripts/azure-pipelines.sh > /dev/null
+          touch local.properties
+          echo "ndk.dir=${ANDROID_NDK_HOME}" >> local.properties
+          cat local.properties
+        displayName: "Install Android SDK"
+
+      - powershell: New-Item -Type Directory -Force ${env:VCPKG_DEFAULT_BINARY_CACHE}
       - task: Cache@2
         inputs:
-          key: 'vcpkg-android | "$(Agent.OS)"'
+          key: '2022-02 | vcpkg-android | $(Agent.OS)'
           path: $(VCPKG_DEFAULT_BINARY_CACHE)
-          restoreKeys: |
-            vcpkg-android | "$(Agent.OS)"
-            $(Agent.OS)
         displayName: "Cache: Vcpkg"
       - task: Cache@2
         inputs:
-          key: 'gradle | "$(Agent.OS)"'
+          key: 'gradle | $(Agent.OS)'
           path: $(GRADLE_USER_HOME)
-          restoreKeys: |
-            gradle | "$(Agent.OS)"
-            $(Agent.OS)
         displayName: "Cache: Gradle"
-      - powershell: gradle wrapper
+
+      - powershell: |
+          $env:JAVA_HOME=$env:JAVA_HOME_11_X64
+          gradle wrapper --info
         displayName: "Gradle: wrapper"
       - task: Gradle@2
         inputs:
           gradleWrapperFile: "gradlew"
           publishJUnitResults: false
           gradleOptions: "-Xmx3072m"
+          jdkVersionOption: 1.11
           tasks: "androidDependencies"
-          options: "--info"
         displayName: "Gradle: androidDependencies"
       - task: Gradle@2
         inputs:
@@ -79,6 +72,7 @@ jobs:
           publishJUnitResults: false
           checkStyleRunAnalysis: true
           gradleOptions: "-Xmx3072m"
+          jdkVersionOption: 1.11
           tasks: "assembleDebug"
           options: "--info"
         displayName: "Gradle: assembleDebug"
@@ -88,18 +82,65 @@ jobs:
           publishJUnitResults: false
           checkStyleRunAnalysis: true
           gradleOptions: "-Xmx3072m"
+          jdkVersionOption: 1.11
           tasks: "assemble"
           options: "--warning-mode all"
         displayName: "Gradle: assemble"
-      - task: CopyFiles@2
-        inputs:
-          contents: "$(Build.SourcesDirectory)/build/outputs/aar/*.aar"
-          targetFolder: "$(build.artifactStagingDirectory)"
-      - task: PublishBuildArtifacts@1
       - task: Gradle@2
         inputs:
           gradleWrapperFile: "gradlew"
           publishJUnitResults: true
+          jdkVersionOption: 1.11
           testResultsFiles: '**/TEST-*.xml'
           tasks: "connectedAndroidTest createDebugCoverageReport"
         displayName: "Gradle: connectedAndroidTest"
+
+      - task: CopyFiles@2
+        inputs:
+          contents: "$(Build.SourcesDirectory)/build/outputs/aar/*.aar"
+          targetFolder: "$(Build.ArtifactStagingDirectory)"
+      - task: PublishBuildArtifacts@1
+
+  - job: build_cmake
+    pool:
+      vmImage: "ubuntu-20.04"
+    strategy:
+      matrix:
+        debug_arm64:
+          cmake.preset: arm64-android-debug
+          build.triplet: arm64-android
+        debug_arm:
+          cmake.preset: arm-android-debug
+          build.triplet: arm-android
+        debug_x64:
+          cmake.preset: x64-android-debug
+          build.triplet: x64-android
+    variables:
+      ANDROID_NDK_HOME: "/usr/local/lib/android/sdk/ndk/23.1.7779620" # check $ANDROID_NDK_LATEST_HOME
+    steps:
+      - checkout: self
+      - powershell: sudo apt-get install -y --fix-missing ninja-build tree curl zip unzip tar rsync
+        displayName: "Install: APT packages"
+      - powershell: New-Item -Type Directory -Force ${env:VCPKG_DEFAULT_BINARY_CACHE}
+      - task: Cache@2
+        inputs:
+          key: '2022-02 | vcpkg-android | $(Agent.OS)'
+          path: $(VCPKG_DEFAULT_BINARY_CACHE)
+        displayName: "Cache: Vcpkg"
+      - task: run-vcpkg@0
+        displayName: "Install: Vcpkg"
+        inputs:
+          vcpkgGitCommitId: $(VCPKG_COMMIT)
+          vcpkgArguments: "ms-gsl spdlog curl[openssl]"
+        env:
+          VCPKG_DEFAULT_TRIPLET: $(build.triplet)
+      - task: CMake@1
+        displayName: "CMake: Configure/Generate"
+        inputs:
+          cmakeArgs: "--preset=$(cmake.preset)"
+          workingDirectory: $(Build.SourcesDirectory)
+      - task: CMake@1
+        displayName: "CMake: Build"
+        inputs:
+          cmakeArgs: "--build --preset=$(cmake.preset)"
+          workingDirectory: $(Build.SourcesDirectory)
