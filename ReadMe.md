@@ -2,6 +2,9 @@
 
 [![Build Status](https://dev.azure.com/luncliff/personal/_apis/build/status/luncliff.Muffin?branchName=main)](https://dev.azure.com/luncliff/personal/_build/latest?definitionId=34&branchName=main)
 [![CircleCI](https://circleci.com/gh/luncliff/Muffin/tree/main.svg?style=shield)](https://circleci.com/gh/luncliff/Muffin/tree/main)
+![Gradle](https://img.shields.io/badge/Gradle-7.2+-02303a)
+![Android NDK](https://img.shields.io/badge/NDK-22+-3ecf7d)
+![CMake](https://img.shields.io/badge/CMake-3.21+-00529b)
 
 Template for Android NDK module
 
@@ -19,7 +22,9 @@ Template for Android NDK module
 
 ### Setup
 
-#### NDK Sanitizers
+#### ~~NDK Sanitizers~~
+
+It won't be used anymore.
 
 ```bash
 cd ${ANDROID_NDK_HOME}/build/tools
@@ -31,7 +36,7 @@ cd ${INSTALL_PATH}
 
 ### Build
 
-The build step uses [Gradle 6.7.1+](https://gradle.org/). If you don't know how to use it, latest [Android Studio](https://developer.android.com/studio/) can do the work.   
+The build step uses [Gradle 7.2.0+](https://docs.gradle.org/current/userguide/userguide.html). If you don't know how to use it, latest [Android Studio](https://developer.android.com/studio/) can do the work.   
 
 ```console
 $ git clone https://github.com/luncliff/Muffin
