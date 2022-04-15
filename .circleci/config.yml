@@ -10,25 +10,28 @@ jobs:
   build:
     docker:
       - image: cimg/android:2022.03-ndk
+    resource_class: medium
     # https://circleci.com/docs/2.0/env-vars
     environment:
       VCPKG_ROOT: /home/circleci/project/vcpkg
+      VCPKG_FEATURE_FLAGS: "versions,manifests,registries,binarycaching"
+      VCPKG_DEFAULT_BINARY_CACHE: /tmp/vcpkg-cache
     steps:
       - checkout
+      - android/accept-licenses
+      - android/install-ndk:
+          version: 23.1.7779620
       - run: 
           name: "Install APT packages"
           command: |
             sudo apt-get update -y
-            sudo apt-get install -y --fix-missing ninja-build tree curl zip unzip tar rsync
+            sudo apt-get install -y --fix-missing ninja-build pkg-config tree curl zip unzip tar rsync
             sudo apt remove --purge --auto-remove cmake
             wget -q https://github.com/Kitware/CMake/releases/download/v3.23.1/cmake-3.23.1-linux-x86_64.tar.gz
             tar -x -f cmake-3.23.1-linux-x86_64.tar.gz
             sudo rsync -r ./cmake-3.23.1-linux-x86_64/ /usr/local
             rm -rf cmake-3.23.1-linux-x86_64
             cmake --version
-            ninja --version
-      - android/install-ndk:
-          version: 23.1.7779620
       - run:
           name: "Create local.properties"
           command: |
@@ -40,24 +43,35 @@ jobs:
             echo "export ANDROID_NDK_HOME=${NDK_PATH}" >> $BASH_ENV
             echo "ndk.dir=${NDK_PATH}" >> local.properties
             cat local.properties
+      - restore_cache:
+          key: cch-{{ checksum ".circleci/config.yml" }}
       - run: 
           name: "Setup Vcpkg"
           command: |
+            mkdir -p ${VCPKG_DEFAULT_BINARY_CACHE}
             git clone --branch=2022.02.23 --depth=1 https://github.com/microsoft/vcpkg
             pushd vcpkg
               ./bootstrap-vcpkg.sh
             popd
-            export VCPKG_ROOT=~/project/vcpkg
             tree -L 1 ${VCPKG_ROOT}
       - run:
           name: "Gradle: wrapper"
           command: gradle wrapper --info
-      - run: 
+      - run:
           name: "Gradle: androidDependencies"
           command: ./gradlew androidDependencies
-      - run: 
+      - save_cache:
+          paths:
+            - ~/.gradle
+            - /tmp/vcpkg-cache
+          key: cch-{{ checksum ".circleci/config.yml" }}
+          when: always
+      - run:
+          name: "Gradle: assembleDebug"
+          command: ./gradlew assembleDebug --info
+      - run:
           name: "Gradle: assemble"
-          command: ./gradlew assemble --info
-      - run: 
+          command: ./gradlew assemble
+      - run:
           name: "Gradle: lint"
           command: ./gradlew lint
