@@ -124,7 +124,7 @@ jobs:
       - powershell: New-Item -Type Directory -Force ${env:VCPKG_DEFAULT_BINARY_CACHE}
       - task: Cache@2
         inputs:
-          key: '2022-02 | vcpkg-android | $(Agent.OS)'
+          key: '2022-02 | vcpkg-android | $(build.triplet)'
           path: $(VCPKG_DEFAULT_BINARY_CACHE)
         displayName: "Cache: Vcpkg"
       - task: run-vcpkg@0
