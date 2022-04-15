@@ -113,6 +113,9 @@ dependencies {
     // https://www.geeksforgeeks.org/desugaring-in-android/
     // coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:1.1.5"
     api group: "androidx.core", name: "core", version: "1.7.0"
+    api group: "androidx.camera", name: "camera-core", version: "1.0.2"
+    api group: "androidx.camera", name: "camera-camera2", version: "1.0.2"
+    api group: "androidx.camera", name: "camera-lifecycle", version: "1.0.2"
     // https://developer.android.com/training/testing/set-up-project#android-test-dependencies
     androidTestImplementation   group: "androidx.test",     name: "core",   version: "1.4.0"
     androidTestImplementation   group: "androidx.test",     name: "rules",  version: "1.4.0"
