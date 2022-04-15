@@ -30,6 +30,7 @@ jobs:
     variables:
       VCPKG_ROOT: "/usr/local/share/vcpkg" # see VCPKG_INSTALLATION_ROOT
       ANDROID_NDK_HOME: "/Users/runner/Library/Android/sdk/ndk/23.1.7779620" # see scripts/azure-pipelines.sh, check $ANDROID_SDK_ROOT
+      SUPPORT_PREFAB: "true"
     steps:
       - checkout: self
 
