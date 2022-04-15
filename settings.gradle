@@ -5,7 +5,17 @@ buildscript {
     }
     dependencies {
         // https://developer.android.com/studio/releases/gradle-plugin
-        classpath("com.android.tools.build:gradle:7.1.2")
+        // see https://github.com/android/ndk/issues/1609
+        //
+        // Linux environment can't find the ninja in android_gradle_build.json
+        // If SUPPORT_PREFAB is not defined, Downgrade the AGP version and build without Prefab...
+        //
+        if(System.getenv("SUPPORT_PREFAB") != null){
+            classpath("com.android.tools.build:gradle:7.1.3")
+        }
+        else {
+            classpath("com.android.tools.build:gradle:7.0.1")
+        }
         // https://github.com/mannodermaus/android-junit5
         classpath("de.mannodermaus.gradle.plugins:android-junit5:1.8.2.0")
     }

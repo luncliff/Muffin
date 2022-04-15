@@ -19,13 +19,13 @@ println("Using NDK: ${ndk_toolchain_file}")
 
 apply plugin: "com.android.library"
 android {
-    // buildToolsVersion "32.0.0"
-    compileSdk 32
+    compileSdk 31
     compileOptions {
         // coreLibraryDesugaringEnabled true
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    // https://github.com/android/ndk/wiki/Changelog-r22
     ndkVersion "23.1.7779620"
     buildTypes {
         debug {
@@ -81,12 +81,17 @@ android {
     // https://developer.android.com/studio/build/native-dependencies?hl=en
     buildFeatures {
         buildConfig = true
-        prefab true
-        prefabPublishing true
     }
-    prefab {
-        muffin.headers "include"
+    if(System.getenv("SUPPORT_PREFAB") != null){
+        buildFeatures {
+            prefab true
+            prefabPublishing true
+        }
+        prefab {
+            muffin.headers "include"
+        }
     }
+
     packagingOptions {
         // pickFirst "jniLibs/**/*.so"
         exclude "META-INF/LICENSE*" // JUnit 5 will bundle in files
