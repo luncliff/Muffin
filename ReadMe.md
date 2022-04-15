@@ -1,7 +1,7 @@
 # Muffin
 
-[![Build Status](https://dev.azure.com/luncliff/personal/_apis/build/status/luncliff.Muffin?branchName=master)](https://dev.azure.com/luncliff/personal/_build/latest?definitionId=34&branchName=master)
-[![CircleCI](https://circleci.com/gh/luncliff/Muffin/tree/master.svg?style=shield)](https://circleci.com/gh/luncliff/Muffin/tree/master)
+[![Build Status](https://dev.azure.com/luncliff/personal/_apis/build/status/luncliff.Muffin?branchName=main)](https://dev.azure.com/luncliff/personal/_build/latest?definitionId=34&branchName=main)
+[![CircleCI](https://circleci.com/gh/luncliff/Muffin/tree/main.svg?style=shield)](https://circleci.com/gh/luncliff/Muffin/tree/main)
 
 Template for Android NDK module
 
