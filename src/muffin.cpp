@@ -1,7 +1,3 @@
-/**
- * @file    libmain.cpp
- * @author  github.com/luncliff (luncliff@gmail.com)
- */
 #include <spdlog/spdlog.h>
 
 #include <muffin.hpp>

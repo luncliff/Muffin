@@ -14,7 +14,7 @@ schedules:
 
 variables:
   - name: vcpkg.commit
-    value: "e809a42f87565e803b2178a0c11263f462d1800a" # mainstream 2022.04.12
+    value: "cef0b3ec767df6e83806899fe9525f6cf8d7bc91" # mainstream 2022.06.16.1
   - name: vcpkg.feature.flags
     value: "versions,manifests,registries,binarycaching"
   - name: vcpkg.default.binary.cache
@@ -25,11 +25,11 @@ variables:
 jobs:
   - job: build_gradle
     pool:
-      vmImage: "macOS-11"
+      vmImage: "macOS-latest"
     variables:
       VCPKG_ROOT: "/usr/local/share/vcpkg" # see VCPKG_INSTALLATION_ROOT
-      ANDROID_NDK_HOME: "/Users/runner/Library/Android/sdk/ndk/23.1.7779620" # see scripts/azure-pipelines.sh, check $ANDROID_SDK_ROOT
-      SUPPORT_PREFAB: "true"
+      ANDROID_NDK_HOME: "/Users/runner/Library/Android/sdk/ndk/24.0.8215888" # see scripts/azure-pipelines.sh, check $ANDROID_SDK_ROOT
+      # SUPPORT_PREFAB: "true"
     steps:
       - checkout: self
       - powershell: brew install ninja tree
@@ -41,11 +41,6 @@ jobs:
       #     cat local.properties
       #   displayName: "Install Android SDK"
       - powershell: New-Item -Type Directory -Force ${env:VCPKG_DEFAULT_BINARY_CACHE}
-      - task: Cache@2
-        inputs:
-          key: "2022-07 | vcpkg-android | $(Agent.OS)"
-          path: $(VCPKG_DEFAULT_BINARY_CACHE)
-        displayName: "Cache: Vcpkg"
       - task: Cache@2
         inputs:
           key: "gradle | $(Agent.OS)"
@@ -91,7 +86,6 @@ jobs:
       #     testResultsFiles: '**/TEST-*.xml'
       #     tasks: "connectedAndroidTest createDebugCoverageReport"
       #   displayName: "Gradle: connectedAndroidTest"
-
       - task: CopyFiles@2
         inputs:
           contents: "$(Build.SourcesDirectory)/build/outputs/aar/*.aar"
