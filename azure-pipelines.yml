@@ -25,11 +25,11 @@ variables:
 jobs:
   - job: build_gradle
     pool:
-      vmImage: "macOS-11"
+      vmImage: "macOS-latest"
     variables:
       VCPKG_ROOT: "/usr/local/share/vcpkg" # see VCPKG_INSTALLATION_ROOT
-      ANDROID_NDK_HOME: "/Users/runner/Library/Android/sdk/ndk/23.1.7779620" # see scripts/azure-pipelines.sh, check $ANDROID_SDK_ROOT
-      SUPPORT_PREFAB: "true"
+      ANDROID_NDK_HOME: "/Users/runner/Library/Android/sdk/ndk/24.0.8215888" # see scripts/azure-pipelines.sh, check $ANDROID_SDK_ROOT
+      # SUPPORT_PREFAB: "true"
     steps:
       - checkout: self
       - powershell: brew install ninja tree
