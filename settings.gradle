@@ -17,6 +17,6 @@ buildscript {
             classpath("com.android.tools.build:gradle:7.0.1")
         }
         // https://github.com/mannodermaus/android-junit5
-        classpath("de.mannodermaus.gradle.plugins:android-junit5:1.8.2.0")
+        classpath("de.mannodermaus.gradle.plugins:android-junit5:1.8.2.1")
     }
 }

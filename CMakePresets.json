@@ -12,13 +12,10 @@
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build-arm64-android",
             "installDir": "${sourceDir}/install",
+            "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
             "cacheVariables": {
                 "BUILD_SHARED_LIBS": "ON",
                 "CMAKE_SYSTEM_NAME": "Android",
-                "CMAKE_TOOLCHAIN_FILE": {
-                    "type": "FILEPATH",
-                    "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
-                },
                 "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": {
                     "type": "FILEPATH",
                     "value": "$env{ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake"
@@ -31,7 +28,7 @@
                 "VCPKG_TARGET_TRIPLET": "arm64-android"
             },
             "environment": {
-                "NDK_VERSION": "23.1.7779620",
+                "NDK_VERSION": "24.0.8215888",
                 "VCPKG_FEATURE_FLAGS": "versions,manifests,registries"
             }
         },

@@ -1,7 +1,3 @@
-/**
- * @file    adapter.cpp
- * @author  github.com/luncliff (luncliff@gmail.com)
- */
 #include <android/api-level.h>
 #include <android/hardware_buffer.h>
 #include <android/native_window_jni.h>

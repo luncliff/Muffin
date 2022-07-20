@@ -18,8 +18,8 @@ include(CheckIncludeFileCXX)
 find_package(ZLIB REQUIRED)
 find_package(Vulkan REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
-find_package(OpenSSL REQUIRED)
-find_package(CURL CONFIG REQUIRED)
+# find_package(OpenSSL REQUIRED)
+# find_package(CURL CONFIG REQUIRED)
 
 check_include_file_cxx("vulkan/vulkan.h" found_vulkan)
 check_include_file_cxx("GLES3/gl3.h" found_gles3)
@@ -49,7 +49,7 @@ message(STATUS "  ndk: ${ANDROID_NDK}")
 message(STATUS "  stl: ${ANDROID_STL}")
 
 list(APPEND headers include/muffin.hpp)
-add_library(muffin
+add_library(muffin SHARED
     ${headers}
     src/muffin.cpp
     src/adapter.cpp
@@ -89,7 +89,7 @@ target_link_libraries(muffin
 PRIVATE
     ${CMAKE_DL_LIBS} ${ANDROID_STL} m android log EGL GLESv3 # camera2ndk mediandk
     Vulkan::Vulkan
-    ZLIB::ZLIB OpenSSL::SSL OpenSSL::Crypto CURL::libcurl
+    # ZLIB::ZLIB OpenSSL::SSL OpenSSL::Crypto CURL::libcurl
     fmt::fmt-header-only spdlog::spdlog_header_only
 )
 

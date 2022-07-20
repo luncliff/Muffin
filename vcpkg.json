@@ -4,14 +4,6 @@
     "homepage": "https://github.com/luncliff/muffin",
     "description": "Template for Android NDK module",
     "dependencies": [
-        "spdlog",
-        {
-            "name": "curl",
-            "default-features": false,
-            "features": [
-                "openssl"
-            ],
-            "platform": "android"
-        }
+        "spdlog"
     ]
 }
