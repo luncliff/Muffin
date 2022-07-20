@@ -45,17 +45,14 @@ static_assert(__cplusplus >= 201703L, "requires C++ 17 or later");
 #endif
 #include <android/native_window_jni.h>
 
-#include <gsl/gsl>
-
 class _INTERFACE_ egl_surface_t final {
     EGLDisplay display;
     EGLConfig config;
-    gsl::owner<EGLSurface> surface = EGL_NO_SURFACE;
-    gsl::owner<EGLNativeWindowType> window = nullptr;
+    EGLSurface surface = EGL_NO_SURFACE;
+    EGLNativeWindowType window = nullptr;
 
    public:
-    egl_surface_t(EGLDisplay display, EGLConfig config,
-                  gsl::not_null<EGLSurface> surface,
+    egl_surface_t(EGLDisplay display, EGLConfig config, EGLSurface surface,
                   EGLNativeWindowType window = nullptr) noexcept;
     ~egl_surface_t() noexcept;
     egl_surface_t(egl_surface_t const &) = delete;

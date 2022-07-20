@@ -17,7 +17,6 @@ include(CheckIncludeFileCXX)
 
 find_package(ZLIB REQUIRED)
 find_package(Vulkan REQUIRED)
-find_package(Microsoft.GSL CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(CURL CONFIG REQUIRED)
@@ -89,7 +88,9 @@ PRIVATE
 target_link_libraries(muffin
 PRIVATE
     ${CMAKE_DL_LIBS} ${ANDROID_STL} m android log EGL GLESv3 # camera2ndk mediandk
-    ZLIB::ZLIB OpenSSL::SSL OpenSSL::Crypto Vulkan::Vulkan Microsoft.GSL::GSL spdlog::spdlog_header_only CURL::libcurl
+    Vulkan::Vulkan
+    ZLIB::ZLIB OpenSSL::SSL OpenSSL::Crypto CURL::libcurl
+    fmt::fmt-header-only spdlog::spdlog_header_only
 )
 
 target_link_options(muffin

@@ -63,8 +63,8 @@ void set_field(JNIEnv *env,  //
  * @brief Find exception class information (type info)
  * @see java/lang/RuntimeException
  */
-void store_runtime_exception(JNIEnv *env, gsl::czstring message) noexcept {
-    gsl::czstring class_name = "java/lang/RuntimeException";
+void store_runtime_exception(JNIEnv *env, const char *message) noexcept {
+    const char *class_name = "java/lang/RuntimeException";
     jclass _type = env->FindClass(class_name);
     if (_type == nullptr) return spdlog::error("No Java class: {}", class_name);
     env->ThrowNew(_type, message);

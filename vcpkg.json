@@ -4,7 +4,6 @@
     "homepage": "https://github.com/luncliff/muffin",
     "description": "Template for Android NDK module",
     "dependencies": [
-        "ms-gsl",
         "spdlog",
         {
             "name": "curl",

@@ -4,7 +4,6 @@
  */
 #include <spdlog/spdlog.h>
 
-#include <gsl/gsl>
 #include <muffin.hpp>
 
 std::string make_egl_message(EGLint ec) noexcept {
@@ -102,7 +101,7 @@ uint32_t choose_config(EGLDisplay display, EGLConfig &config,
 }
 
 egl_surface_t::egl_surface_t(EGLDisplay display, EGLConfig config,
-                             gsl::not_null<EGLSurface> surface,
+                             EGLSurface surface,
                              EGLNativeWindowType window) noexcept
     : display{display}, config{config}, surface{surface}, window{window} {
     // ...

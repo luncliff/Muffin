@@ -51,9 +51,9 @@ jobs:
               git clone --branch=2022.02.23 --depth=1 https://github.com/microsoft/vcpkg
               pushd vcpkg
                 ./bootstrap-vcpkg.sh
-                ./vcpkg install --triplet arm64-android ms-gsl spdlog curl[openssl]
-                ./vcpkg install --triplet arm-android   ms-gsl spdlog curl[openssl]
-                ./vcpkg install --triplet x64-android   ms-gsl spdlog curl[openssl]
+                ./vcpkg install --triplet arm64-android spdlog curl[openssl]
+                ./vcpkg install --triplet arm-android   spdlog curl[openssl]
+                ./vcpkg install --triplet x64-android   spdlog curl[openssl]
               popd
             popd
             tree -L 1 ${VCPKG_ROOT}
