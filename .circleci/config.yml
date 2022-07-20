@@ -20,8 +20,8 @@ jobs:
       - checkout
       - android/accept-licenses
       - android/install-ndk:
-          version: 23.1.7779620
-      - run: 
+          version: 24.0.8215888
+      - run:
           name: "Install APT packages"
           command: |
             sudo apt-get update -y
@@ -35,20 +35,20 @@ jobs:
       - run:
           name: "Fix ANDROID_NDK_HOME"
           command: |
-            tree -L 1 $HOME/android-sdk/ndk/23.1.7779620
-            export NDK_PATH=$HOME/android-sdk/ndk/23.1.7779620
+            tree -L 1 $HOME/android-sdk/ndk/24.0.8215888
+            export NDK_PATH=$HOME/android-sdk/ndk/24.0.8215888
             # override the wrong path
             echo "export ANDROID_NDK_HOME=${NDK_PATH}" >> $BASH_ENV
             echo "${ANDROID_NDK_HOME}"
       - restore_cache:
           key: cch-{{ checksum ".circleci/config.yml" }}
-      - run: 
+      - run:
           name: "Setup Vcpkg"
           command: |
             rm vcpkg.json
             mkdir -p ${VCPKG_DEFAULT_BINARY_CACHE}
             pushd /tmp
-              git clone --branch=2022.02.23 --depth=1 https://github.com/microsoft/vcpkg
+              git clone --branch=2022.06.16.1 --depth=1 https://github.com/microsoft/vcpkg
               pushd vcpkg
                 ./bootstrap-vcpkg.sh
                 ./vcpkg install --triplet arm64-android spdlog curl[openssl]

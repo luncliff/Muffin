@@ -51,7 +51,7 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
                 "ANDROID_ABI": "armeabi-v7a",
-                "VCPKG_TARGET_TRIPLET": "arm-android"
+                "VCPKG_TARGET_TRIPLET": "arm-neon-android"
             }
         }
     ],
