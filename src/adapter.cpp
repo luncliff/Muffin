@@ -103,8 +103,9 @@ static_assert(sizeof(void *) <= sizeof(jlong),
 
 extern "C" {
 
-jboolean Java_muffin_NativeRunnable_resume(JNIEnv *, jobject,
-                                           void *handle) noexcept {
+JNIEXPORT
+jboolean Java_dev_luncliff_muffin_NativeRunnable_resume(JNIEnv *, jobject,
+                                                        void *handle) noexcept {
     spdlog::debug(std::string_view{__PRETTY_FUNCTION__});
     auto task = coroutine_handle<>::from_address(handle);
     task.resume();
@@ -115,9 +116,10 @@ jboolean Java_muffin_NativeRunnable_resume(JNIEnv *, jobject,
     return JNI_FALSE;  // next run will continue the work
 }
 
-jlong Java_muffin_Renderer1_create1(JNIEnv *env, jclass, jobject _executor,
-                                    EGLDisplay egl_display,
-                                    EGLContext egl_context) noexcept {
+JNIEXPORT
+jlong Java_dev_luncliff_muffin_Renderer1_create1(
+    JNIEnv *env, jclass, jobject _executor, EGLDisplay egl_display,
+    EGLContext egl_context) noexcept {
     spdlog::debug(std::string_view{__PRETTY_FUNCTION__});
     auto context = std::make_unique<egl_context_t>(egl_display, egl_context);
     if (context->handle() == EGL_NO_CONTEXT) {
@@ -129,14 +131,18 @@ jlong Java_muffin_Renderer1_create1(JNIEnv *env, jclass, jobject _executor,
     return reinterpret_cast<jlong>(context.release());
 }
 
-void Java_muffin_Renderer1_destroy1(JNIEnv *, jclass,
-                                    egl_context_t *context) noexcept {
+JNIEXPORT
+void Java_dev_luncliff_muffin_Renderer1_destroy1(
+    JNIEnv *, jclass, egl_context_t *context) noexcept {
     spdlog::debug(std::string_view{__PRETTY_FUNCTION__});
     delete context;
 }
 
-jlong Java_muffin_Renderer1_create2(JNIEnv *env, jclass, egl_context_t *context,
-                                    jobject _surface, jobject) noexcept {
+JNIEXPORT
+jlong Java_dev_luncliff_muffin_Renderer1_create2(JNIEnv *env, jclass,
+                                                 egl_context_t *context,
+                                                 jobject _surface,
+                                                 jobject) noexcept {
     spdlog::debug(std::string_view{__PRETTY_FUNCTION__});
     try {
         auto surface = make_egl_surface(context->get_display(), env, _surface);
@@ -147,30 +153,38 @@ jlong Java_muffin_Renderer1_create2(JNIEnv *env, jclass, egl_context_t *context,
     }
 }
 
-void Java_muffin_Renderer1_destroy2(JNIEnv *, jclass,
-                                    egl_surface_t *surface) noexcept {
+JNIEXPORT
+void Java_dev_luncliff_muffin_Renderer1_destroy2(
+    JNIEnv *, jclass, egl_surface_t *surface) noexcept {
     spdlog::debug(std::string_view{__PRETTY_FUNCTION__});
     delete surface;
 }
 
-jint Java_muffin_Renderer1_resume(JNIEnv *, jclass, egl_context_t *context,
-                                  egl_surface_t *surface) noexcept {
+JNIEXPORT
+jint Java_dev_luncliff_muffin_Renderer1_resume(
+    JNIEnv *, jclass, egl_context_t *context, egl_surface_t *surface) noexcept {
     return context->resume(surface->handle());
 }
 
-jint Java_muffin_Renderer1_suspend(JNIEnv *, jclass, egl_context_t *context,
-                                   jobject) noexcept {
+JNIEXPORT
+jint Java_dev_luncliff_muffin_Renderer1_suspend(JNIEnv *, jclass,
+                                                egl_context_t *context,
+                                                jobject) noexcept {
     return context->suspend();
 }
-jint Java_muffin_Renderer1_present(JNIEnv *, jclass,
-                                   egl_context_t *context) noexcept {
+
+JNIEXPORT
+jint Java_dev_luncliff_muffin_Renderer1_present(
+    JNIEnv *, jclass, egl_context_t *context) noexcept {
     spdlog::debug(std::string_view{__PRETTY_FUNCTION__});
     glClearColor(0, 0, 1, 1);
     glClear(GL_COLOR_BUFFER_BIT);
     return context->swap();
 }
 
-jstring Java_muffin_Renderer1_toString(JNIEnv *env, jobject _this) noexcept {
+JNIEXPORT
+jstring Java_dev_luncliff_muffin_Renderer1_toString(JNIEnv *env,
+                                                    jobject _this) noexcept {
     jlong value = 0;
     get_field(env, "muffin/Renderer1", _this, "ptr", value);
     constexpr auto cap = 32 - sizeof(jlong);

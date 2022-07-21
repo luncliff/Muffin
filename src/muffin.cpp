@@ -32,28 +32,6 @@ static EGLint hardware_format_rgbx32[]{EGL_RENDERABLE_TYPE,
                                        EGL_ALPHA_SIZE,
                                        0,
                                        EGL_NONE};
-static EGLint hardware_format_rgb24[]{EGL_RENDERABLE_TYPE,
-                                      EGL_OPENGL_ES2_BIT,
-                                      EGL_SURFACE_TYPE,
-                                      EGL_WINDOW_BIT | EGL_PBUFFER_BIT,
-                                      EGL_BLUE_SIZE,
-                                      8,
-                                      EGL_GREEN_SIZE,
-                                      8,
-                                      EGL_RED_SIZE,
-                                      8,
-                                      EGL_NONE};
-static EGLint hardware_format_rgb565[]{EGL_RENDERABLE_TYPE,
-                                       EGL_OPENGL_ES2_BIT,
-                                       EGL_SURFACE_TYPE,
-                                       EGL_WINDOW_BIT | EGL_PBUFFER_BIT,
-                                       EGL_BLUE_SIZE,
-                                       5,
-                                       EGL_GREEN_SIZE,
-                                       6,
-                                       EGL_RED_SIZE,
-                                       5,
-                                       EGL_NONE};
 
 EGLint choose_config(EGLDisplay display, EGLConfig &config,
                      const EGLint *attrs) noexcept {
@@ -118,7 +96,6 @@ uint32_t egl_surface_t::get_size(EGLint &width, EGLint &height) const noexcept {
     return 0;
 }
 
-_INTERFACE_
 std::unique_ptr<egl_surface_t> make_egl_surface(EGLDisplay display,
                                                 EGLint width,
                                                 EGLint height) noexcept(false) {
@@ -133,7 +110,6 @@ std::unique_ptr<egl_surface_t> make_egl_surface(EGLDisplay display,
     return std::make_unique<egl_surface_t>(display, config, surface);
 }
 
-_INTERFACE_
 std::unique_ptr<egl_surface_t> make_egl_surface(
     EGLDisplay display, JNIEnv *_env, jobject _surface) noexcept(false) {
     auto window = std::unique_ptr<ANativeWindow, void (*)(ANativeWindow *)>{
@@ -171,10 +147,7 @@ egl_context_t::egl_context_t(EGLDisplay display,
         spdlog::debug("EGL create: context {} {}", context, share_context);
 }
 
-egl_context_t::~egl_context_t() noexcept {
-    spdlog::debug(__FUNCTION__);
-    destroy();
-}
+egl_context_t::~egl_context_t() noexcept { destroy(); }
 
 EGLContext egl_context_t::handle() const noexcept { return context; }
 
@@ -185,7 +158,6 @@ EGLConfig egl_context_t::get_config(EGLNativeWindowType window) const noexcept {
 }
 
 EGLint egl_context_t::resume(EGLSurface _surface) noexcept {
-    spdlog::debug(__FUNCTION__);
     if (context == EGL_NO_CONTEXT) return EGL_NOT_INITIALIZED;
     if (_surface == EGL_NO_SURFACE) return EGL_BAD_SURFACE;
     this->surface = _surface;
@@ -199,7 +171,6 @@ EGLint egl_context_t::resume(EGLSurface _surface) noexcept {
 }
 
 EGLint egl_context_t::suspend() noexcept {
-    spdlog::debug(__FUNCTION__);
     if (context == EGL_NO_CONTEXT) return EGL_NOT_INITIALIZED;
     // unbind surface. OpenGL ES 3.1 will return true
     spdlog::debug("EGL current: EGL_NO_SURFACE/EGL_NO_SURFACE {}", context);
@@ -212,7 +183,6 @@ EGLint egl_context_t::suspend() noexcept {
 }
 
 void egl_context_t::destroy() noexcept {
-    spdlog::debug(__FUNCTION__);
     if (display == EGL_NO_DISPLAY)  // already terminated
         return;
 

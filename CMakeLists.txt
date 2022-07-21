@@ -48,7 +48,8 @@ message(STATUS "  abi: ${ANDROID_ABI}")
 message(STATUS "  ndk: ${ANDROID_NDK}")
 message(STATUS "  stl: ${ANDROID_STL}")
 
-list(APPEND headers include/muffin.hpp)
+list(APPEND headers src/muffin.hpp)
+
 add_library(muffin SHARED
     ${headers}
     src/muffin.cpp

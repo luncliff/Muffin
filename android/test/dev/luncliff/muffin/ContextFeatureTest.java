@@ -1,4 +1,4 @@
-package muffin;
+package dev.luncliff.muffin;
 
 import static android.content.pm.PackageManager.GET_SHARED_LIBRARY_FILES;
 

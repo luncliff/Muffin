@@ -1,4 +1,4 @@
-package muffin;
+package dev.luncliff.muffin;
 
 class NativeRunnable implements Runnable {
   static {

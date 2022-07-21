@@ -1,4 +1,4 @@
-package muffin;
+package dev.luncliff.muffin;
 
 import android.content.Context;
 import android.graphics.PixelFormat;
