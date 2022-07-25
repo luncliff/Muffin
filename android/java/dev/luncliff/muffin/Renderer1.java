@@ -5,6 +5,8 @@ import android.opengl.EGLContext;
 import android.opengl.EGLDisplay;
 import android.util.Log;
 import android.view.Surface;
+
+import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import java.util.concurrent.Executor;
 
@@ -17,56 +19,47 @@ public class Renderer1 implements AutoCloseable {
     System.loadLibrary("muffin");
   }
 
-  private final long pcontext;
-  private long psurface;
-  private final Executor background;
+  private final long context;
+  private long surface;
 
-  public Renderer1(Context context, Executor executor, EGLDisplay display, EGLContext shared)
-      throws RuntimeException {
-    if (executor == null)
-      executor = ContextCompat.getMainExecutor(context);
-    background = executor;
-    pcontext = create1(background, display.getNativeHandle(), shared.getNativeHandle());
-    if (pcontext == 0)
+  private static native long create1(long display, long context);
+  private static native void destroy1(long surface);
+  private static native long create2(long context, Surface window);
+  private static native void destroy2(long surface);
+  private static native int resume(long context, long surface);
+  private static native int suspend(long context);
+  private static native int present(long context);
+
+  public Renderer1(Context ctx, EGLDisplay display, EGLContext shared){
+    context = create1(display.getNativeHandle(), shared.getNativeHandle());
+    if (context == 0)
       throw new RuntimeException("failed to create");
   }
 
-  private static native long create1(Executor executor, long display, long context)
-      throws RuntimeException;
-  private static native void destroy1(long surface);
-
   @Override
-  public void close() throws RuntimeException {
+  public void close(){
     final int ec = suspend();
     if (ec != 0)
       Log.w("Renderer1", String.format("failed to pause: %d", ec));
-    destroy1(pcontext);
+    destroy1(context);
   }
 
-  private static native long create2(long context, Surface surface, Executor executor)
-      throws RuntimeException;
-  private static native void destroy2(long surface);
-
-  private static native int resume(long context, long surface);
-  // @todo throw if error code
-  public int resume(Surface surface) throws RuntimeException {
-    psurface = create2(pcontext, surface, background);
-    return resume(pcontext, psurface);
+  public int resume(Surface window) {
+    surface = create2(context, window);
+    return resume(context, surface);
   }
-  private static native int suspend(long context, Executor executor);
-  // @todo throw if error code
-  public int suspend() throws RuntimeException {
-    final int ec = suspend(pcontext, background);
-    if (psurface != 0)
-      destroy2(psurface);
-    psurface = 0;
+  public int suspend() {
+    final int ec = suspend(context);
+    if (surface != 0)
+      destroy2(surface);
+    surface = 0;
     return ec;
   }
 
-  private static native int present(long context);
-  public int present() throws RuntimeException {
-    return present(pcontext);
+  public int present() {
+    return present(context);
   }
 
+  @NonNull
   public native String toString();
 }

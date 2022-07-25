@@ -26,6 +26,7 @@ check_include_file_cxx("GLES3/gl3.h" found_gles3)
 check_include_file_cxx("EGL/egl.h" found_egl)
 check_include_file_cxx("EGL/eglext_angle.h" found_egl_angle)
 
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_INSTALL_LIBDIR "lib/${ANDROID_ABI}")
 
@@ -51,9 +52,11 @@ message(STATUS "  stl: ${ANDROID_STL}")
 list(APPEND headers src/muffin.hpp)
 
 add_library(muffin SHARED
-    ${headers}
-    src/muffin.cpp
+    ${headers} src/muffin.cpp
+    src/egl_context.hpp src/egl_context.cpp
+    src/egl_surface.hpp src/egl_surface.cpp
     src/adapter.cpp
+    src/worker.cpp
 )
 
 # https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html#cross-compiling-for-android-with-the-ndk
