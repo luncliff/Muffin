@@ -75,7 +75,7 @@ camera_status_t camera_group_t::start_repeat(uint16_t id, ANativeWindow* window,
                                                return target;
                                            }(),
                                            ACameraOutputTarget_free};
-    assert(target.get() != nullptr);
+    // (target.get() != nullptr);
 
     // ---- capture request (preview) ----
     auto request = capture_request_ptr{[=]() {
@@ -84,11 +84,9 @@ camera_status_t camera_group_t::start_repeat(uint16_t id, ANativeWindow* window,
                                            // TEMPLATE_RECORD, TEMPLATE_PREVIEW, TEMPLATE_MANUAL,
                                            const auto status = ACameraDevice_createCaptureRequest(
                                                this->device_set[id], TEMPLATE_PREVIEW, &ptr);
-                                           assert(status == ACAMERA_OK);
                                            return ptr;
                                        }(),
                                        ACaptureRequest_free};
-    assert(request.get() != nullptr);
 
     // `ACaptureRequest` == how to capture
     // detailed config comes here...
@@ -98,7 +96,7 @@ camera_status_t camera_group_t::start_repeat(uint16_t id, ANativeWindow* window,
 
     // designate target surface in request
     status = ACaptureRequest_addTarget(request.get(), target.get());
-    assert(status == ACAMERA_OK);
+    // (status == ACAMERA_OK);
     // ---- session output ----
 
     // container for multiplexing of session output
@@ -108,7 +106,7 @@ camera_status_t camera_group_t::start_repeat(uint16_t id, ANativeWindow* window,
                                                               return container;
                                                           }(),
                                                           ACaptureSessionOutputContainer_free};
-    assert(container.get() != nullptr);
+    // (container.get() != nullptr);
 
     // session output
     auto output = capture_session_output_ptr{[=]() {
@@ -117,15 +115,15 @@ camera_status_t camera_group_t::start_repeat(uint16_t id, ANativeWindow* window,
                                                  return output;
                                              }(),
                                              ACaptureSessionOutput_free};
-    assert(output.get() != nullptr);
+    // (output.get() != nullptr);
 
     status = ACaptureSessionOutputContainer_add(container.get(), output.get());
-    assert(status == ACAMERA_OK);
+    // (status == ACAMERA_OK);
 
     // ---- create a session ----
     status = ACameraDevice_createCaptureSession(this->device_set[id], container.get(), addressof(on_session_changed),
                                                 addressof(this->session_set[id]));
-    assert(status == ACAMERA_OK);
+    // (status == ACAMERA_OK);
 
     // ---- set request ----
     array<ACaptureRequest*, 1> batch_request{};
@@ -134,12 +132,12 @@ camera_status_t camera_group_t::start_repeat(uint16_t id, ANativeWindow* window,
     status = ACameraCaptureSession_setRepeatingRequest(this->session_set[id], addressof(on_capture_event),
                                                        batch_request.size(), batch_request.data(),
                                                        addressof(this->seq_id_set[id]));
-    assert(status == ACAMERA_OK);
+    // (status == ACAMERA_OK);
 
     status = ACaptureSessionOutputContainer_remove(container.get(), output.get());
-    assert(status == ACAMERA_OK);
+    // (status == ACAMERA_OK);
     status = ACaptureRequest_removeTarget(request.get(), target.get());
-    assert(status == ACAMERA_OK);
+    // (status == ACAMERA_OK);
 
     return status;
 }
@@ -170,7 +168,7 @@ camera_status_t camera_group_t::start_capture(uint16_t id, ANativeWindow* window
                                                return target;
                                            }(),
                                            ACameraOutputTarget_free};
-    assert(target.get() != nullptr);
+    // (target.get() != nullptr);
 
     // ---- capture request (preview) ----
     auto request = capture_request_ptr{[](ACameraDevice* device) {
@@ -180,11 +178,10 @@ camera_status_t camera_group_t::start_capture(uint16_t id, ANativeWindow* window
                                            // TEMPLATE_MANUAL,
                                            const auto status =
                                                ACameraDevice_createCaptureRequest(device, TEMPLATE_STILL_CAPTURE, &ptr);
-                                           assert(status == ACAMERA_OK);
                                            return ptr;
                                        }(this->device_set[id]),
                                        ACaptureRequest_free};
-    assert(request.get() != nullptr);
+    // (request.get() != nullptr);
 
     // `ACaptureRequest` == how to capture
     // detailed config comes here...
@@ -194,7 +191,7 @@ camera_status_t camera_group_t::start_capture(uint16_t id, ANativeWindow* window
 
     // designate target surface in request
     status = ACaptureRequest_addTarget(request.get(), target.get());
-    assert(status == ACAMERA_OK);
+    // (status == ACAMERA_OK);
     // defer    ACaptureRequest_removeTarget;
 
     // ---- session output ----
@@ -206,7 +203,7 @@ camera_status_t camera_group_t::start_capture(uint16_t id, ANativeWindow* window
                                                               return container;
                                                           }(),
                                                           ACaptureSessionOutputContainer_free};
-    assert(container.get() != nullptr);
+    // (container.get() != nullptr);
 
     // session output
     auto output = capture_session_output_ptr{[=]() {
@@ -215,16 +212,16 @@ camera_status_t camera_group_t::start_capture(uint16_t id, ANativeWindow* window
                                                  return output;
                                              }(),
                                              ACaptureSessionOutput_free};
-    assert(output.get() != nullptr);
+    // (output.get() != nullptr);
 
     status = ACaptureSessionOutputContainer_add(container.get(), output.get());
-    assert(status == ACAMERA_OK);
+    // (status == ACAMERA_OK);
     // defer ACaptureSessionOutputContainer_remove
 
     // ---- create a session ----
     status = ACameraDevice_createCaptureSession(this->device_set[id], container.get(), addressof(on_session_changed),
                                                 addressof(this->session_set[id]));
-    assert(status == ACAMERA_OK);
+    // (status == ACAMERA_OK);
 
     // ---- set request ----
     array<ACaptureRequest*, 1> batch_request{};
@@ -232,13 +229,13 @@ camera_status_t camera_group_t::start_capture(uint16_t id, ANativeWindow* window
 
     status = ACameraCaptureSession_capture(this->session_set[id], addressof(on_capture_event), batch_request.size(),
                                            batch_request.data(), addressof(this->seq_id_set[id]));
-    assert(status == ACAMERA_OK);
+    // (status == ACAMERA_OK);
 
     status = ACaptureSessionOutputContainer_remove(container.get(), output.get());
-    assert(status == ACAMERA_OK);
+    // (status == ACAMERA_OK);
 
     status = ACaptureRequest_removeTarget(request.get(), target.get());
-    assert(status == ACAMERA_OK);
+    // (status == ACAMERA_OK);
 
     return status;
 }
@@ -266,10 +263,10 @@ auto camera_group_t::get_facing(uint16_t id) noexcept -> uint16_t {
 
     // lens facing
     const auto facing = *(entry.data.u8);
-    assert(facing == ACAMERA_LENS_FACING_FRONT ||  // ACAMERA_LENS_FACING_FRONT
-           facing == ACAMERA_LENS_FACING_BACK ||   // ACAMERA_LENS_FACING_BACK
-           facing == ACAMERA_LENS_FACING_EXTERNAL  // ACAMERA_LENS_FACING_EXTERNAL
-    );
+    // (facing == ACAMERA_LENS_FACING_FRONT ||  // ACAMERA_LENS_FACING_FRONT
+    //  facing == ACAMERA_LENS_FACING_BACK ||   // ACAMERA_LENS_FACING_BACK
+    //  facing == ACAMERA_LENS_FACING_EXTERNAL  // ACAMERA_LENS_FACING_EXTERNAL
+    // );
     return facing;
 }
 

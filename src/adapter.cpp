@@ -42,17 +42,6 @@ static_assert(sizeof(void*) <= sizeof(jlong), "`jlong` must be able to contain `
 extern "C" {
 
 JNIEXPORT
-jboolean Java_dev_luncliff_muffin_NativeRunnable_resume(JNIEnv*, jobject, void* handle) noexcept {
-    auto task = coroutine_handle<>::from_address(handle);
-    task.resume();
-    if (task.done()) {
-        task.destroy();
-        return JNI_TRUE;
-    }
-    return JNI_FALSE;  // next run will continue the work
-}
-
-JNIEXPORT
 jlong Java_dev_luncliff_muffin_Renderer1_create1(JNIEnv*, jclass, jlong d, jlong c) noexcept {
     auto es_display = reinterpret_cast<EGLDisplay>(d);
     auto es_config = get_default_config(es_display);
@@ -231,16 +220,16 @@ void Java_dev_luncliff_muffin_DeviceQuery_Init(JNIEnv* env, jclass) noexcept {
     java.index_out_of_bounds_exception = env->FindClass("java/lang/IndexOutOfBoundsException");
 
     // !!! Since we can't throw if this info is null, call assert !!!
-    assert(java.runtime_exception != nullptr);
-    assert(java.illegal_argument_exception != nullptr);
-    assert(java.illegal_state_exception != nullptr);
-    assert(java.unsupported_operation_exception != nullptr);
-    assert(java.index_out_of_bounds_exception != nullptr);
+    // (java.runtime_exception != nullptr);
+    // (java.illegal_argument_exception != nullptr);
+    // (java.illegal_state_exception != nullptr);
+    // (java.unsupported_operation_exception != nullptr);
+    // (java.index_out_of_bounds_exception != nullptr);
 
     context.release();
 
     context.manager = ACameraManager_create();
-    assert(context.manager != nullptr);
+    // (context.manager != nullptr);
 
     status = ACameraManager_getCameraIdList(context.manager, &context.id_list);
     if (status != ACAMERA_OK) goto ThrowJavaException;
@@ -249,7 +238,7 @@ void Java_dev_luncliff_muffin_DeviceQuery_Init(JNIEnv* env, jclass) noexcept {
     // https://android.googlesource.com/platform/frameworks/av/+/2e19c3c/services/camera/libcameraservice/camera2/CameraMetadata.h
     num_camera = context.id_list->numCameras;
     // library must reserve enough space to support
-    assert(num_camera <= camera_group_t::max_camera_count);
+    // (num_camera <= camera_group_t::max_camera_count);
 
     for (uint16_t i = 0u; i < num_camera; ++i) {
         const char* cam_id = context.id_list->cameraIds[i];
@@ -273,11 +262,11 @@ void Java_dev_luncliff_muffin_DeviceQuery_SetDeviceData(JNIEnv* env, jclass, job
     if (context.manager == nullptr)  // not initialized
         return;
 
-    java.device_t = env->FindClass("ndcam/Device");
-    assert(java.device_t != nullptr);
+    java.device_t = env->FindClass("dev.luncliff.muffin/DeviceHandle");
+    // (java.device_t != nullptr);
 
     const auto count = context.id_list->numCameras;
-    assert(count == env->GetArrayLength(devices));
+    // (count == env->GetArrayLength(devices));
 
     // https://developer.android.com/ndk/reference/group/camera
     for (short index = 0; index < count; ++index) {
@@ -302,10 +291,10 @@ void Java_dev_luncliff_muffin_DeviceQuery_SetDeviceData(JNIEnv* env, jclass, job
         }
 
         jobject device = env->GetObjectArrayElement(devices, index);
-        assert(device != nullptr);
+        // (device != nullptr);
 
         java.device_id_f = env->GetFieldID(java.device_t, "id", "S");  // short
-        assert(java.device_id_f != nullptr);
+        // (java.device_id_f != nullptr);
 
         env->SetShortField(device, java.device_id_f, index);
     }
@@ -316,7 +305,7 @@ jbyte Java_dev_luncliff_muffin_DeviceHandle_facing(JNIEnv* env, jobject self) no
         return JNI_FALSE;
 
     auto device_id = env->GetShortField(self, java.device_id_f);
-    assert(device_id != -1);
+    // (device_id != -1);
 
     const auto facing = context.get_facing(static_cast<uint16_t>(device_id));
     return static_cast<jbyte>(facing);
@@ -328,7 +317,7 @@ void Java_dev_luncliff_muffin_DeviceHandle_open(JNIEnv* env, jobject self) noexc
         return;
 
     const auto id = env->GetShortField(self, java.device_id_f);
-    assert(id != -1);
+    // (id != -1);
 
     ACameraDevice_StateCallbacks callbacks{};
     callbacks.context = std::addressof(context);
@@ -349,7 +338,7 @@ void Java_dev_luncliff_muffin_DeviceHandle_close(JNIEnv* env, jobject self) noex
         return;
 
     const auto id = env->GetShortField(self, java.device_id_f);
-    assert(id != -1);
+    // (id != -1);
 
     context.close_device(id);
 }
@@ -360,13 +349,13 @@ void Java_dev_luncliff_muffin_DeviceHandle_startRepeat(JNIEnv* env, jobject self
     if (context.manager == nullptr)  // not initialized
         return;
     const auto id = env->GetShortField(self, java.device_id_f);
-    assert(id != -1);
+    // (id != -1);
 
     // `ANativeWindow_fromSurface` acquires a reference
     // `ANativeWindow_release` releases it
     // ANativeWindow* window = ANativeWindow_fromSurface(env, surface);
     auto window = native_window_ptr{ANativeWindow_fromSurface(env, surface), ANativeWindow_release};
-    assert(window.get() != nullptr);
+    // (window.get() != nullptr);
 
     ACameraCaptureSession_stateCallbacks on_state_changed{};
     on_state_changed.context = std::addressof(context);
@@ -392,7 +381,7 @@ void Java_dev_luncliff_muffin_DeviceHandle_startRepeat(JNIEnv* env, jobject self
         reinterpret_cast<ACameraCaptureSession_captureCallback_sequenceEnd>(context_on_capture_sequence_complete);
 
     status = context.start_repeat(id, window.get(), on_state_changed, on_capture_event);
-    assert(status == ACAMERA_OK);
+    // (status == ACAMERA_OK);
 }
 
 void Java_dev_luncliff_muffin_DeviceHandle_stopRepeat(JNIEnv* env, jobject self) noexcept {
@@ -400,7 +389,7 @@ void Java_dev_luncliff_muffin_DeviceHandle_stopRepeat(JNIEnv* env, jobject self)
         return;
 
     const auto id = env->GetShortField(self, java.device_id_f);
-    assert(id != -1);
+    // (id != -1);
 
     context.stop_repeat(id);
 }
@@ -411,13 +400,13 @@ void Java_dev_luncliff_muffin_DeviceHandle_startCapture(JNIEnv* env, jobject sel
         return;
 
     auto id = env->GetShortField(self, java.device_id_f);
-    assert(id != -1);
+    // (id != -1);
 
     // `ANativeWindow_fromSurface` acquires a reference
     // `ANativeWindow_release` releases it
     // ANativeWindow* window = ANativeWindow_fromSurface(env, surface);
     auto window = native_window_ptr{ANativeWindow_fromSurface(env, surface), ANativeWindow_release};
-    assert(window.get() != nullptr);
+    // (window.get() != nullptr);
 
     ACameraCaptureSession_stateCallbacks on_state_changed{};
     on_state_changed.context = std::addressof(context);
@@ -443,7 +432,7 @@ void Java_dev_luncliff_muffin_DeviceHandle_startCapture(JNIEnv* env, jobject sel
         reinterpret_cast<ACameraCaptureSession_captureCallback_sequenceEnd>(context_on_capture_sequence_complete);
 
     status = context.start_capture(id, window.get(), on_state_changed, on_capture_event);
-    assert(status == ACAMERA_OK);
+    // (status == ACAMERA_OK);
 }
 
 void Java_dev_luncliff_muffin_DeviceHandle_stopCapture(JNIEnv* env, jobject self) noexcept {
@@ -451,7 +440,7 @@ void Java_dev_luncliff_muffin_DeviceHandle_stopCapture(JNIEnv* env, jobject self
         return;
 
     const auto id = env->GetShortField(self, java.device_id_f);
-    assert(id != -1);
+    // (id != -1);
 
     context.stop_capture(id);
 }
