@@ -1,4 +1,4 @@
-package muffin;
+package dev.luncliff.muffin;
 
 import android.content.Context;
 import android.graphics.PixelFormat;
@@ -20,15 +20,21 @@ public class RendererSurfaceTest implements ImageReader.OnImageAvailableListener
   Context context = ApplicationProvider.getApplicationContext();
   Renderer1 renderer = null;
   AtomicInteger counter = new AtomicInteger();
+  Handler handler = null;
 
   @BeforeEach
   public void setup() {
     final EGLDisplay display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
     final EGLContext shared = EGL14.eglGetCurrentContext();
     Assertions.assertEquals(EGL14.EGL_NO_CONTEXT, shared);
-    renderer = new Renderer1(context, null, display, shared);
+    renderer = new Renderer1(context, display, shared);
     Assertions.assertNotNull(renderer);
+    if(android.os.Build.VERSION.SDK_INT >= 28)
+      handler = Handler.createAsync(context.getMainLooper());
+    else
+      handler = new Handler(context.getMainLooper());
   }
+
   @AfterEach
   public void teardown() {
     if (renderer != null)
@@ -50,31 +56,34 @@ public class RendererSurfaceTest implements ImageReader.OnImageAvailableListener
   @Test
   public void test_RGBA_8888() {
     ImageReader reader = ImageReader.newInstance(400, 400, PixelFormat.RGBA_8888, 3);
-    reader.setOnImageAvailableListener(this, Handler.createAsync(context.getMainLooper()));
+    reader.setOnImageAvailableListener(this, handler);
     Assertions.assertEquals(0, renderer.resume(reader.getSurface()));
     for (int i = 0; i < 4; i++) Assertions.assertEquals(0, renderer.present());
     Assertions.assertEquals(0, renderer.suspend());
   }
+
   @Test
   public void test_RGBX_8888() {
     ImageReader reader = ImageReader.newInstance(400, 400, PixelFormat.RGBX_8888, 3);
-    reader.setOnImageAvailableListener(this, Handler.createAsync(context.getMainLooper()));
+    reader.setOnImageAvailableListener(this, handler);
     Assertions.assertEquals(0, renderer.resume(reader.getSurface()));
     for (int i = 0; i < 4; i++) Assertions.assertEquals(0, renderer.present());
     Assertions.assertEquals(0, renderer.suspend());
   }
+
   // TODO: format mismatch(UnsupportedOperationException) when EGL swap buffer operation
   @Test
   public void test_RGB_888() {
     ImageReader reader = ImageReader.newInstance(400, 400, PixelFormat.RGB_888, 3);
-    reader.setOnImageAvailableListener(this, Handler.createAsync(context.getMainLooper()));
+    reader.setOnImageAvailableListener(this, handler);
     // this format is NOT supported. expect error code 95
     Assertions.assertThrows(RuntimeException.class, () -> renderer.resume(reader.getSurface()));
   }
+
   @Test
   public void test_RGB_565() {
     ImageReader reader = ImageReader.newInstance(400, 400, PixelFormat.RGB_565, 3);
-    reader.setOnImageAvailableListener(this, Handler.createAsync(context.getMainLooper()));
+    reader.setOnImageAvailableListener(this, handler);
     // this format is NOT supported. expect error code 95
     Assertions.assertThrows(RuntimeException.class, () -> renderer.resume(reader.getSurface()));
   }

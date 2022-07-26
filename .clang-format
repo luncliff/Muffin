@@ -1,9 +1,11 @@
 BasedOnStyle: Google
 AlignTrailingComments: true
 ReflowComments: false
+ColumnLimit: 120
 ---
 Language: Cpp
 Standard: Cpp11
 UseTab: Never
 IndentWidth: 4
 ---
+

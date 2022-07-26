@@ -18,14 +18,13 @@ include(CheckIncludeFileCXX)
 find_package(ZLIB REQUIRED)
 find_package(Vulkan REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
-# find_package(OpenSSL REQUIRED)
-# find_package(CURL CONFIG REQUIRED)
 
 check_include_file_cxx("vulkan/vulkan.h" found_vulkan)
 check_include_file_cxx("GLES3/gl3.h" found_gles3)
 check_include_file_cxx("EGL/egl.h" found_egl)
 check_include_file_cxx("EGL/eglext_angle.h" found_egl_angle)
 
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_INSTALL_LIBDIR "lib/${ANDROID_ABI}")
 
@@ -48,11 +47,15 @@ message(STATUS "  abi: ${ANDROID_ABI}")
 message(STATUS "  ndk: ${ANDROID_NDK}")
 message(STATUS "  stl: ${ANDROID_STL}")
 
-list(APPEND headers include/muffin.hpp)
+list(APPEND headers src/muffin.hpp)
+
 add_library(muffin SHARED
-    ${headers}
-    src/muffin.cpp
+    ${headers} src/muffin.cpp
+    src/egl_context.hpp src/egl_context.cpp
+    src/egl_surface.hpp src/egl_surface.cpp
+    src/ndk_camera.hpp src/ndk_camera.cpp
     src/adapter.cpp
+    src/worker.cpp
 )
 
 # https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html#cross-compiling-for-android-with-the-ndk
@@ -87,9 +90,8 @@ PRIVATE
 
 target_link_libraries(muffin
 PRIVATE
-    ${CMAKE_DL_LIBS} ${ANDROID_STL} m android log EGL GLESv3 # camera2ndk mediandk
+    ${CMAKE_DL_LIBS} ${ANDROID_STL} m android log EGL GLESv3 camera2ndk mediandk
     Vulkan::Vulkan
-    # ZLIB::ZLIB OpenSSL::SSL OpenSSL::Crypto CURL::libcurl
     fmt::fmt-header-only spdlog::spdlog_header_only
 )
 
