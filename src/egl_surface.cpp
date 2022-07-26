@@ -16,6 +16,8 @@ EGLint hardware_format_rgba32[]{EGL_RENDERABLE_TYPE,
                                 8,
                                 EGL_ALPHA_SIZE,
                                 8,
+                                EGL_DEPTH_SIZE,
+                                16,
                                 EGL_NONE};
 EGLint hardware_format_rgbx32[]{EGL_RENDERABLE_TYPE,
                                 EGL_OPENGL_ES2_BIT,
@@ -29,6 +31,8 @@ EGLint hardware_format_rgbx32[]{EGL_RENDERABLE_TYPE,
                                 8,
                                 EGL_ALPHA_SIZE,
                                 0,
+                                EGL_DEPTH_SIZE,
+                                16,
                                 EGL_NONE};
 
 EGLint choose_config(EGLDisplay display, EGLConfig &config, const EGLint *attrs) noexcept {

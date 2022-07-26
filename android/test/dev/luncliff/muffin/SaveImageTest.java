@@ -6,13 +6,6 @@ import android.media.Image;
 import android.media.ImageReader;
 import android.os.Environment;
 import android.util.Log;
-
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.jupiter.api.Assertions;
-import org.junit.runner.RunWith;
-
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -23,8 +16,11 @@ import java.util.concurrent.TimeoutException;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.rule.GrantPermissionRule;
+import org.junit.Rule;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-@RunWith(AndroidJUnit4.class)
 public class SaveImageTest {
     @Rule
     public GrantPermissionRule permissions = GrantPermissionRule.grant(Manifest.permission.CAMERA,
@@ -36,7 +32,7 @@ public class SaveImageTest {
     /**
      * Get the directory to save captured images
      */
-    @Before
+    @BeforeEach
     public void setup() {
         File downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         File folder = new File(downloads, "muffin-test");
@@ -58,17 +54,17 @@ public class SaveImageTest {
     }
 
     @Test
-    public void sameImageToFile() {
+    public void saveImageToFile() {
         DeviceHandle camera = getAnyCamera();
         Assertions.assertNotNull(camera);
 
         // camera image reader
-        try (ImageReader imageReader = ImageReader.newInstance(640, 480, ImageFormat.YUV_420_888, 2)) {
+        try (ImageReader reader = ImageReader.newInstance(640, 480, ImageFormat.YUV_420_888, 2)) {
             // start capture operation
-            camera.capture(imageReader.getSurface());
-            ByteBuffer blob = null;
+            camera.capture(reader.getSurface());
+            ByteBuffer blob;
             // expect image in 2 sec
-            try (Image image = TestHelper.WaitForImage(imageReader, 2)) {
+            try (Image image = TestHelper.WaitForImage(reader, 2)) {
                 Assertions.assertNotNull(image);
                 camera.stopCapture(); // stop after capture
                 blob = TestHelper.ValidateAndGetBlob(image);

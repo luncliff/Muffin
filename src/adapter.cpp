@@ -31,86 +31,13 @@ void set_field(JNIEnv* env,  //
  * @see java/lang/RuntimeException
  */
 void store_runtime_exception(JNIEnv* env, const char* message) noexcept {
-    const char* class_name = "java/lang/RuntimeException";
-    jclass _type = env->FindClass(class_name);
-    if (_type == nullptr) return spdlog::error("No Java class: {}", class_name);
-    env->ThrowNew(_type, message);
+    const char* name = "java/lang/RuntimeException";
+    jclass t = env->FindClass(name);
+    if (t == nullptr) return spdlog::error("{:s}: {:s}", "No Java class", name);
+    env->ThrowNew(t, message);
 }
 
 static_assert(sizeof(void*) <= sizeof(jlong), "`jlong` must be able to contain `void*` pointer");
-
-extern "C" {
-
-JNIEXPORT
-jlong Java_dev_luncliff_muffin_Renderer1_create1(JNIEnv*, jclass, jlong d, jlong c) noexcept {
-    auto es_display = reinterpret_cast<EGLDisplay>(d);
-    auto es_config = get_default_config(es_display);
-    auto es_context = reinterpret_cast<EGLContext>(c);
-    auto context = std::make_unique<egl_context_t>(es_display, es_config, es_context);
-    if (context->handle() == EGL_NO_CONTEXT) {
-        spdlog::error("context is created but not valid");
-        return 0;
-    }
-    return reinterpret_cast<jlong>(context.release());
-}
-
-JNIEXPORT
-void Java_dev_luncliff_muffin_Renderer1_destroy1(JNIEnv*, jclass, jlong c) noexcept {
-    auto context = reinterpret_cast<egl_context_t*>(c);
-    delete context;
-}
-
-JNIEXPORT
-jlong Java_dev_luncliff_muffin_Renderer1_create2(JNIEnv* env, jclass, jlong c, jobject _surface) noexcept {
-    try {
-        auto context = reinterpret_cast<egl_context_t*>(c);
-        auto surface = make_egl_surface(context->get_display(), env, _surface);
-        return reinterpret_cast<jlong>(surface.release());
-    } catch (const std::exception& ex) {
-        store_runtime_exception(env, ex.what());
-        return 0;
-    }
-}
-
-JNIEXPORT
-void Java_dev_luncliff_muffin_Renderer1_destroy2(JNIEnv*, jclass, jlong s) noexcept {
-    auto surface = reinterpret_cast<egl_surface_t*>(s);
-    delete surface;
-}
-
-JNIEXPORT
-jint Java_dev_luncliff_muffin_Renderer1_resume(JNIEnv*, jclass, jlong c, jlong s) noexcept {
-    auto context = reinterpret_cast<egl_context_t*>(c);
-    auto surface = reinterpret_cast<egl_surface_t*>(s);
-    return context->resume(surface->handle());
-}
-
-JNIEXPORT
-jint Java_dev_luncliff_muffin_Renderer1_suspend(JNIEnv*, jclass, jlong c) noexcept {
-    auto context = reinterpret_cast<egl_context_t*>(c);
-    return context->suspend();
-}
-
-JNIEXPORT
-jint Java_dev_luncliff_muffin_Renderer1_present(JNIEnv*, jclass, jlong c) noexcept {
-    auto context = reinterpret_cast<egl_context_t*>(c);
-    glClearColor(0, 0, 1, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
-    return context->swap();
-}
-
-JNIEXPORT
-jstring Java_dev_luncliff_muffin_Renderer1_toString(JNIEnv* env, jobject self) noexcept {
-    jclass _type = env->FindClass("dev/luncliff/muffin/Renderer1");
-    jlong value = 0;
-    get_field(env, _type, self, "ptr", value);
-    constexpr auto cap = 32 - sizeof(jlong);
-    char txt[cap]{};
-    snprintf(txt, cap, "%p", reinterpret_cast<void*>(value));
-    return env->NewStringUTF(txt);
-}
-
-}  // extern "C"
 
 /// @brief Group of java native type variables
 /// @see https://programming.guide/java/list-of-java-exceptions.html
@@ -205,6 +132,7 @@ camera_group_t context{};
 
 extern "C" {
 
+JNIEXPORT
 void Java_dev_luncliff_muffin_DeviceQuery_Init(JNIEnv* env, jclass) noexcept {
     uint16_t num_camera = 0;
     camera_status_t status = ACAMERA_OK;
@@ -248,16 +176,19 @@ void Java_dev_luncliff_muffin_DeviceQuery_Init(JNIEnv* env, jclass) noexcept {
         spdlog::error("{}: {}", "ACameraManager_getCameraCharacteristics", status);
         goto ThrowJavaException;
     }
+    return;
 ThrowJavaException:
     env->ThrowNew(java.illegal_argument_exception, camera_error_message(status));
 }
 
+JNIEXPORT
 jint Java_dev_luncliff_muffin_DeviceQuery_GetDeviceCount(JNIEnv*, jclass) noexcept {
     if (context.manager == nullptr)  // not initialized
         return 0;
     return context.id_list->numCameras;
 }
 
+JNIEXPORT
 void Java_dev_luncliff_muffin_DeviceQuery_SetDeviceData(JNIEnv* env, jclass, jobjectArray devices) noexcept {
     if (context.manager == nullptr)  // not initialized
         return;
@@ -300,6 +231,7 @@ void Java_dev_luncliff_muffin_DeviceQuery_SetDeviceData(JNIEnv* env, jclass, job
     }
 }
 
+JNIEXPORT
 jbyte Java_dev_luncliff_muffin_DeviceHandle_facing(JNIEnv* env, jobject self) noexcept {
     if (context.manager == nullptr)  // not initialized
         return JNI_FALSE;
@@ -311,6 +243,7 @@ jbyte Java_dev_luncliff_muffin_DeviceHandle_facing(JNIEnv* env, jobject self) no
     return static_cast<jbyte>(facing);
 }
 
+JNIEXPORT
 void Java_dev_luncliff_muffin_DeviceHandle_open(JNIEnv* env, jobject self) noexcept {
     camera_status_t status = ACAMERA_OK;
     if (context.manager == nullptr)  // not initialized
@@ -333,6 +266,7 @@ void Java_dev_luncliff_muffin_DeviceHandle_open(JNIEnv* env, jobject self) noexc
     env->ThrowNew(java.runtime_exception, fmt::format("ACameraManager_openCamera: {}", status).c_str());
 }
 
+JNIEXPORT
 void Java_dev_luncliff_muffin_DeviceHandle_close(JNIEnv* env, jobject self) noexcept {
     if (context.manager == nullptr)  // not initialized
         return;
@@ -343,7 +277,7 @@ void Java_dev_luncliff_muffin_DeviceHandle_close(JNIEnv* env, jobject self) noex
     context.close_device(id);
 }
 
-// TODO: Resource cleanup
+JNIEXPORT
 void Java_dev_luncliff_muffin_DeviceHandle_startRepeat(JNIEnv* env, jobject self, jobject surface) noexcept {
     camera_status_t status = ACAMERA_OK;
     if (context.manager == nullptr)  // not initialized
@@ -384,6 +318,7 @@ void Java_dev_luncliff_muffin_DeviceHandle_startRepeat(JNIEnv* env, jobject self
     // (status == ACAMERA_OK);
 }
 
+JNIEXPORT
 void Java_dev_luncliff_muffin_DeviceHandle_stopRepeat(JNIEnv* env, jobject self) noexcept {
     if (context.manager == nullptr)  // not initialized
         return;
@@ -394,6 +329,7 @@ void Java_dev_luncliff_muffin_DeviceHandle_stopRepeat(JNIEnv* env, jobject self)
     context.stop_repeat(id);
 }
 
+JNIEXPORT
 void Java_dev_luncliff_muffin_DeviceHandle_startCapture(JNIEnv* env, jobject self, jobject surface) noexcept {
     camera_status_t status = ACAMERA_OK;
     if (context.manager == nullptr)  // not initialized
@@ -435,6 +371,7 @@ void Java_dev_luncliff_muffin_DeviceHandle_startCapture(JNIEnv* env, jobject sel
     // (status == ACAMERA_OK);
 }
 
+JNIEXPORT
 void Java_dev_luncliff_muffin_DeviceHandle_stopCapture(JNIEnv* env, jobject self) noexcept {
     if (context.manager == nullptr)  // not initialized
         return;
@@ -443,6 +380,121 @@ void Java_dev_luncliff_muffin_DeviceHandle_stopCapture(JNIEnv* env, jobject self
     // (id != -1);
 
     context.stop_capture(id);
+}
+
+JNIEXPORT jlong Java_dev_luncliff_muffin_EGLSurfaceOwner_query(JNIEnv*, jclass, jlong, jlong s) {
+    auto surface = reinterpret_cast<egl_surface_t*>(s);
+    return reinterpret_cast<jlong>(surface->get_config());
+}
+
+JNIEXPORT void Java_dev_luncliff_muffin_EGLSurfaceOwner_destroy1(JNIEnv*, jclass, jlong, jlong s) {
+    auto surface = reinterpret_cast<egl_surface_t*>(s);
+    delete surface;
+}
+
+JNIEXPORT jlong Java_dev_luncliff_muffin_EGLSurfaceOwner_create2(JNIEnv* env, jclass, jlong d, jint w, jint h) {
+    try {
+        auto es_display = reinterpret_cast<EGLDisplay>(d);
+        if (eglInitialize(es_display, nullptr, nullptr) == EGL_FALSE)
+            throw std::system_error(eglGetError(), std::generic_category(), "eglInitialize");
+
+        auto surface = make_egl_surface(es_display, w, h);
+        return reinterpret_cast<jlong>(surface.release());
+    } catch (const std::exception& ex) {
+        spdlog::error("{:s}: {:s}", __func__, ex.what());
+        store_runtime_exception(env, ex.what());
+        return reinterpret_cast<jlong>(EGL_NO_SURFACE);
+    }
+}
+
+JNIEXPORT jlong Java_dev_luncliff_muffin_EGLSurfaceOwner_create1(JNIEnv* env, jclass, jlong d, jobject window) {
+    try {
+        auto es_display = reinterpret_cast<EGLDisplay>(d);
+        if (eglInitialize(es_display, nullptr, nullptr) == EGL_FALSE)
+            throw std::system_error(eglGetError(), std::generic_category(), "eglInitialize");
+
+        auto surface = make_egl_surface(es_display, env, window);
+        return reinterpret_cast<jlong>(surface.release());
+    } catch (const std::exception& ex) {
+        spdlog::error("{:s}: {:s}", __func__, ex.what());
+        store_runtime_exception(env, ex.what());
+        return reinterpret_cast<jlong>(EGL_NO_SURFACE);
+    }
+}
+
+JNIEXPORT jlong Java_dev_luncliff_muffin_EGLContextOwner_create1(JNIEnv* env, jclass, jlong d, jlong c, jlong shared) {
+    try {
+        auto es_display = reinterpret_cast<EGLDisplay>(d);
+        if (eglInitialize(es_display, nullptr, nullptr) == EGL_FALSE)
+            throw std::system_error(eglGetError(), std::generic_category(), "eglInitialize");
+
+        auto es_config = reinterpret_cast<EGLConfig>(c);
+        auto owner = std::make_unique<egl_context_t>(es_display, es_config, reinterpret_cast<EGLContext>(shared));
+        return reinterpret_cast<jlong>(owner.release());
+    } catch (const std::exception& ex) {
+        spdlog::error("{:s}: {:s}", __func__, ex.what());
+        store_runtime_exception(env, ex.what());
+        return reinterpret_cast<jlong>(EGL_NO_CONTEXT);
+    }
+}
+
+JNIEXPORT jlong Java_dev_luncliff_muffin_EGLContextOwner_create2(JNIEnv* env, jclass clazz, jlong d, jlong c, jlong p) {
+    auto ctx = reinterpret_cast<egl_context_t*>(p);
+    return Java_dev_luncliff_muffin_EGLContextOwner_create1(env, clazz, d, c, reinterpret_cast<jlong>(ctx->handle()));
+}
+
+JNIEXPORT void Java_dev_luncliff_muffin_EGLContextOwner_destroy1(JNIEnv*, jclass, jlong, jlong c) {
+    auto ptr = reinterpret_cast<egl_context_t*>(c);
+    delete ptr;
+}
+
+JNIEXPORT jint Java_dev_luncliff_muffin_EGLContextOwner_resume1(JNIEnv* env, jclass, jlong, jlong c, jlong s) {
+    try {
+        auto ptr = reinterpret_cast<egl_context_t*>(c);
+        if (EGLint ec = ptr->resume(reinterpret_cast<EGLSurface>(s)); ec != 0) {
+            spdlog::error("{}: {}", "egl_context_t::resume", ec);
+            return ec;
+        }
+        return 0;
+    } catch (const std::exception& ex) {
+        spdlog::error("{:s}: {:s}", __func__, ex.what());
+        store_runtime_exception(env, ex.what());
+        return EXIT_FAILURE;
+    }
+}
+
+JNIEXPORT jint Java_dev_luncliff_muffin_EGLContextOwner_resume2(JNIEnv* env, jclass clazz, jlong d, jlong c, jlong s) {
+    auto surface = reinterpret_cast<egl_surface_t*>(s);
+    return Java_dev_luncliff_muffin_EGLContextOwner_resume1(env, clazz, d, c,
+                                                            reinterpret_cast<jlong>(surface->handle()));
+}
+
+JNIEXPORT jint Java_dev_luncliff_muffin_EGLContextOwner_suspend(JNIEnv* env, jclass, jlong, jlong c) {
+    try {
+        auto ptr = reinterpret_cast<egl_context_t*>(c);
+        if (EGLint ec = ptr->suspend(); ec != 0) {
+            spdlog::error("{}: {}", "egl_context_t::resume", ec);
+            return ec;
+        }
+        return 0;
+    } catch (const std::exception& ex) {
+        spdlog::error("{:s}: {:s}", __func__, ex.what());
+        store_runtime_exception(env, ex.what());
+        return EXIT_FAILURE;
+    }
+}
+
+JNIEXPORT jint Java_dev_luncliff_muffin_EGLContextOwner_present(JNIEnv* env, jclass, jlong, jlong c) {
+    try {
+        auto ptr = reinterpret_cast<egl_context_t*>(c);
+        glClearColor(0, 0, 1, 1);
+        glClear(GL_COLOR_BUFFER_BIT);
+        return ptr->swap();
+    } catch (const std::exception& ex) {
+        spdlog::error("{:s}: {:s}", __func__, ex.what());
+        store_runtime_exception(env, ex.what());
+        return EXIT_FAILURE;
+    }
 }
 
 }  // extern "C"
