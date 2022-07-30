@@ -17,16 +17,14 @@ import androidx.annotation.NonNull;
  * @todo multiple surface request
  */
 public class DeviceHandle {
-    /** library internal identifier */
-    public short id = -1;
-    // private long ptr = 0;
+    private long ptr = 0;
 
     /**
      * @return {@link CameraCharacteristics#LENS_FACING_FRONT } ||
      *         {@link CameraCharacteristics#LENS_FACING_BACK } ||
      *         {@link CameraCharacteristics#LENS_FACING_EXTERNAL }
      */
-    public native byte facing();
+    public native int facing();
 
     /**
      * Open a camera device
@@ -52,9 +50,7 @@ public class DeviceHandle {
      * @param surface output surface for Camera 2 API
      */
     public void repeat(Surface surface) {
-        // ensure the camera is opened
         open();
-        // Create a session with repeating capture request
         startRepeat(surface);
     }
 
@@ -100,6 +96,6 @@ public class DeviceHandle {
     @NonNull
     @Override
     public String toString() {
-        return String.format("DeviceHandle{%s}", id);
+        return String.format("DeviceHandle{%x}", ptr);
     }
 }

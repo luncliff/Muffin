@@ -1,134 +1,124 @@
 #pragma once
 #include <android/hardware_buffer.h>
-#include <android/native_window.h>
 #include <android/native_window_jni.h>
 #include <camera/NdkCameraCaptureSession.h>
 #include <camera/NdkCameraDevice.h>
 #include <camera/NdkCameraError.h>
 #include <camera/NdkCameraManager.h>
-#include <camera/NdkCameraMetadata.h>
-#include <camera/NdkCameraMetadataTags.h>
 #include <camera/NdkCaptureRequest.h>
 #include <media/NdkImage.h>
 #include <media/NdkImageReader.h>
 
 #include <array>
 #include <memory>
+#include <system_error>
 #include <vector>
 
-using native_window_ptr = std::unique_ptr<ANativeWindow, void (*)(ANativeWindow*)>;
-using capture_session_output_container_ptr =
-    std::unique_ptr<ACaptureSessionOutputContainer, void (*)(ACaptureSessionOutputContainer*)>;
-using capture_session_output_ptr = std::unique_ptr<ACaptureSessionOutput, void (*)(ACaptureSessionOutput*)>;
-using capture_request_ptr = std::unique_ptr<ACaptureRequest, void (*)(ACaptureRequest*)>;
-
-using camera_output_target_ptr = std::unique_ptr<ACameraOutputTarget, void (*)(ACameraOutputTarget*)>;
-
 /**
- * Library context. Supports auto releasing and facade for features
- *
- * !!! All NDK type members must be public. There will be no encapsulation !!!
+ * @see https://developer.android.com/ndk/reference/group/camera
+ * @see NdkCameraError.h
  */
-struct camera_group_t final {
-    // without external camera, 2 is enough(back + front).
-    // But we will use more since there might be multiple(for now, 2) external
-    // camera...
-    static constexpr auto max_camera_count = 4;
+struct ndk_camera_error_category_t final : public std::error_category {
+    const char* name() const noexcept override;
+    std::string message(int status) const override;
 
    public:
-    // Android camera manager. After the context is initialized, this must be
-    // non-null if this variable is null, then the context is considered as 'not
-    // initailized' and all operation *can* be ignored
-    ACameraManager* manager = nullptr;
-    ACameraIdList* id_list = nullptr;
-
-    // cached metadata
-    std::array<ACameraMetadata*, max_camera_count> metadata_set{};
-
-    //
-    // even though android system limits the number of maximum open camera
-    // device, we will consider multiple camera are working concurrently.
-    //
-    // if element is nullptr, it means the device is not open.
-    std::array<ACameraDevice*, max_camera_count> device_set{};
-
-    // if there is no session, session pointer will be null
-    std::array<ACameraCaptureSession*, max_camera_count> session_set{};
-
-    // sequence number from capture session
-    std::array<int, max_camera_count> seq_id_set{};
-
-   public:
-    camera_group_t() noexcept = default;
-    // copy-move is disabled
-    camera_group_t(const camera_group_t&) = delete;
-    camera_group_t(camera_group_t&&) = delete;
-    camera_group_t& operator=(const camera_group_t&) = delete;
-    camera_group_t& operator=(camera_group_t&&) = delete;
-    ~camera_group_t() noexcept {
-        this->release();  // ensure release precedure
-    }
-
-   public:
-    void release() noexcept;
-
-   public:
-    auto open_device(uint16_t id, ACameraDevice_StateCallbacks& callbacks) noexcept -> camera_status_t;
-
-    // Notice that this routine doesn't free metadata
-    void close_device(uint16_t id) noexcept;
-
-    auto start_repeat(uint16_t id, ANativeWindow* window, ACameraCaptureSession_stateCallbacks& on_session_changed,
-                      ACameraCaptureSession_captureCallbacks& on_capture_event) noexcept -> camera_status_t;
-    void stop_repeat(uint16_t id) noexcept;
-
-    auto start_capture(uint16_t id, ANativeWindow* window, ACameraCaptureSession_stateCallbacks& on_session_changed,
-                       ACameraCaptureSession_captureCallbacks& on_capture_event) noexcept -> camera_status_t;
-    void stop_capture(uint16_t id) noexcept;
-
-    // ACAMERA_LENS_FACING_FRONT
-    // ACAMERA_LENS_FACING_BACK
-    // ACAMERA_LENS_FACING_EXTERNAL
-    uint16_t get_facing(uint16_t id) noexcept;
+    /// @brief Change ACamera error codes to string
+    static const char* get_message(camera_status_t status) noexcept;
 };
 
-// device callbacks
+ndk_camera_error_category_t& get_ndk_camera_errors() noexcept;
 
-void context_on_device_disconnected(camera_group_t& context, ACameraDevice* device) noexcept;
+/**
+ * @see https://developer.android.com/ndk/reference/group/camera
+ */
+struct ndk_camera_session_t {
+    ACameraDevice* device = nullptr;
+    ACameraCaptureSession* session = nullptr;
+    uint16_t index = UINT16_MAX;
+    bool repeating = false;                      // flag to indicate if the session is repeating
+    int sequence_id = CAPTURE_SEQUENCE_ID_NONE;  // sequence ID from capture session
+};
 
-void context_on_device_error(camera_group_t& context, ACameraDevice* device, int error) noexcept;
+/**
+ * @brief Wrapper of `ACameraManager`, After the instance is initialized,
+ *  All of the members must be non-null.
+ *  If there is no external camera, it assumes there are 2 cameras(back + front).
+ * @details Even though android system limits the number of maximum open camera device, we will consider multiple camera are working concurrently.
+ * @see https://developer.android.com/ndk/reference/group/camera
+ */
+class ndk_camera_manager_t final {
+    ACameraManager* manager = nullptr;
+    ACameraIdList* id_list = nullptr;
+    std::array<ACameraMetadata*, 4> metadatas{};  // cached metadata
 
-// session state callbacks
+   public:
+    ndk_camera_manager_t() noexcept(false);
+    ~ndk_camera_manager_t() noexcept;
+    ndk_camera_manager_t(const ndk_camera_manager_t&) = delete;
+    ndk_camera_manager_t(ndk_camera_manager_t&&) = delete;
+    ndk_camera_manager_t& operator=(const ndk_camera_manager_t&) = delete;
+    ndk_camera_manager_t& operator=(ndk_camera_manager_t&&) = delete;
 
-void context_on_session_active(camera_group_t& context, ACameraCaptureSession* session) noexcept;
+    uint32_t count() const noexcept;
 
-void context_on_session_closed(camera_group_t& context, ACameraCaptureSession* session) noexcept;
+    camera_status_t open_device(uint32_t idx, ndk_camera_session_t& info,
+                                ACameraDevice_StateCallbacks& callbacks) noexcept;
 
-void context_on_session_ready(camera_group_t& context, ACameraCaptureSession* session) noexcept;
+    /// @note The function doesn't free metadata
+    void close_device(ndk_camera_session_t& info) noexcept;
 
-// capture callbacks
+    camera_status_t start_capture(ndk_camera_session_t& info, ANativeWindow* window,
+                                  ACameraCaptureSession_stateCallbacks& on_state_change,
+                                  ACameraCaptureSession_captureCallbacks& on_capture_event) noexcept(false);
+    camera_status_t start_repeat(ndk_camera_session_t& info, ANativeWindow* window,
+                                 ACameraCaptureSession_stateCallbacks& on_state_change,
+                                 ACameraCaptureSession_captureCallbacks& on_capture_event) noexcept(false);
+    void close_session(ndk_camera_session_t& info) noexcept(false);
 
-void context_on_capture_started(camera_group_t& context, ACameraCaptureSession* session, const ACaptureRequest* request,
-                                uint64_t time_point) noexcept;
+    uint32_t get_index(ACameraDevice* device) const noexcept;
+    ACameraMetadata* get_metadata(ACameraDevice* device) const noexcept;
+};
 
-void context_on_capture_progressed(camera_group_t& context, ACameraCaptureSession* session, ACaptureRequest* request,
-                                   const ACameraMetadata* result) noexcept;
+/**
+ * @defgroup DeviceCallbacks
+ */
 
-void context_on_capture_completed(camera_group_t& context, ACameraCaptureSession* session, ACaptureRequest* request,
-                                  const ACameraMetadata* result) noexcept;
+void context_on_device_disconnected(ndk_camera_manager_t& context, ACameraDevice* device) noexcept;
 
-void context_on_capture_failed(camera_group_t& context, ACameraCaptureSession* session, ACaptureRequest* request,
+void context_on_device_error(ndk_camera_manager_t& context, ACameraDevice* device, int error) noexcept;
+
+/**
+ * @defgroup SessionStateCallbacks
+ */
+
+void context_on_session_active(ndk_camera_manager_t& context, ACameraCaptureSession* session) noexcept;
+
+void context_on_session_closed(ndk_camera_manager_t& context, ACameraCaptureSession* session) noexcept;
+
+void context_on_session_ready(ndk_camera_manager_t& context, ACameraCaptureSession* session) noexcept;
+
+/**
+ * @defgroup CaptureCallbacks
+ */
+
+void context_on_capture_started(ndk_camera_manager_t& context, ACameraCaptureSession* session,
+                                const ACaptureRequest* request, uint64_t time_point) noexcept;
+
+void context_on_capture_progressed(ndk_camera_manager_t& context, ACameraCaptureSession* session,
+                                   ACaptureRequest* request, const ACameraMetadata* result) noexcept;
+
+void context_on_capture_completed(ndk_camera_manager_t& context, ACameraCaptureSession* session,
+                                  ACaptureRequest* request, const ACameraMetadata* result) noexcept;
+
+void context_on_capture_failed(ndk_camera_manager_t& context, ACameraCaptureSession* session, ACaptureRequest* request,
                                ACameraCaptureFailure* failure) noexcept;
 
-void context_on_capture_buffer_lost(camera_group_t& context, ACameraCaptureSession* session, ACaptureRequest* request,
-                                    ANativeWindow* window, int64_t frame_number) noexcept;
+void context_on_capture_buffer_lost(ndk_camera_manager_t& context, ACameraCaptureSession* session,
+                                    ACaptureRequest* request, ANativeWindow* window, int64_t frame_number) noexcept;
 
-void context_on_capture_sequence_abort(camera_group_t& context, ACameraCaptureSession* session,
+void context_on_capture_sequence_abort(ndk_camera_manager_t& context, ACameraCaptureSession* session,
                                        int sequence_id) noexcept;
 
-void context_on_capture_sequence_complete(camera_group_t& context, ACameraCaptureSession* session, int sequence_id,
-                                          int64_t frame_number) noexcept;
-
-// status - error code to string
-
-const char* camera_error_message(camera_status_t status) noexcept;
+void context_on_capture_sequence_complete(ndk_camera_manager_t& context, ACameraCaptureSession* session,
+                                          int sequence_id, int64_t frame_number) noexcept;

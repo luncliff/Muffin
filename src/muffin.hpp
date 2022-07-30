@@ -6,6 +6,8 @@ static_assert(__cplusplus >= 201703L, "requires C++ 17 or later");
 
 #include <GLES3/gl3.h>
 #include <GLES3/gl31.h>
+#include <android/api-level.h>
+#include <android/hardware_buffer.h>
 
 #include <cerrno>
 #include <experimental/coroutine>

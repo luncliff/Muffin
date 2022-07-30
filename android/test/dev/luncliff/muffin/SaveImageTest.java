@@ -14,7 +14,6 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.rule.GrantPermissionRule;
 import org.junit.Rule;
 import org.junit.jupiter.api.Assertions;
@@ -45,16 +44,16 @@ public class SaveImageTest {
     }
 
     static DeviceHandle getAnyCamera() {
-        DeviceQuery.Init();
-        Assertions.assertNotEquals(0, DeviceQuery.GetDeviceCount());
-        for (DeviceHandle device : DeviceQuery.GetDevices()) {
+        DeviceManager.Init();
+        Assertions.assertNotEquals(0, DeviceManager.GetDeviceCount());
+        for (DeviceHandle device : DeviceManager.GetDevices()) {
             return device;
         }
         return null;
     }
 
     @Test
-    public void saveImageToFile() {
+    public void saveToFile() {
         DeviceHandle camera = getAnyCamera();
         Assertions.assertNotNull(camera);
 
