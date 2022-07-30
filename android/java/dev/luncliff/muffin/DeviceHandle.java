@@ -1,31 +1,30 @@
 package dev.luncliff.muffin;
- 
+
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.os.Handler;
 import android.view.Surface;
 
+import androidx.annotation.NonNull;
+
 /**
  * In short, this is combination of
  * {@link android.hardware.camera2.CameraDevice} and
  * {@link android.hardware.camera2.CameraCaptureSession}
  *
- * TODO - capture request with configuration
- * TODO - multiple surface request
- *
- * @author luncliff@gmail.com
+ * @todo capture request with configuration
+ * @todo multiple surface request
  */
 public class DeviceHandle {
-    /** library internal identifier */
-    public short id = -1;
+    private long ptr = 0;
 
     /**
      * @return {@link CameraCharacteristics#LENS_FACING_FRONT } ||
      *         {@link CameraCharacteristics#LENS_FACING_BACK } ||
      *         {@link CameraCharacteristics#LENS_FACING_EXTERNAL }
      */
-    public native byte facing();
+    public native int facing();
 
     /**
      * Open a camera device
@@ -33,14 +32,14 @@ public class DeviceHandle {
      * @see android.hardware.camera2.CameraManager#openCamera(String,
      *      CameraDevice.StateCallback, Handler)
      */
-    private native void open() throws RuntimeException;
+    private native void open();
 
     /**
      * Close both internal session and device handle so that other device can be
      * opened This method is named to support {@link AutoCloseable} in future update
      *
      * @see CameraCaptureSession#close()
-     * @see CameraDeviceHandle#close()
+     * @see DeviceHandle#close()
      */
     public native void close();
 
@@ -50,10 +49,8 @@ public class DeviceHandle {
      * @see "https://developer.android.com/reference/android/view/Surface"
      * @param surface output surface for Camera 2 API
      */
-    public void repeat(Surface surface) throws RuntimeException {
-        // ensure the camera is opened
-        this.open();
-        // Create a session with repeating capture request
+    public void repeat(Surface surface) {
+        open();
         startRepeat(surface);
     }
 
@@ -77,8 +74,8 @@ public class DeviceHandle {
      * @see "https://developer.android.com/reference/android/view/Surface"
      * @param surface output surface for Camera 2 API
      */
-    public void capture(Surface surface) throws RuntimeException {
-        this.open();
+    public void capture(Surface surface) {
+        open();
         startCapture(surface);
     }
 
@@ -95,4 +92,10 @@ public class DeviceHandle {
      * @see DeviceHandle#startCapture(Surface)
      */
     public native void stopCapture();
+
+    @NonNull
+    @Override
+    public String toString() {
+        return String.format("DeviceHandle{%x}", ptr);
+    }
 }

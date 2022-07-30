@@ -1,334 +1,306 @@
 #include "ndk_camera.hpp"
 
+#include <camera/NdkCameraMetadata.h>
+#include <camera/NdkCameraMetadataTags.h>
 #include <spdlog/spdlog.h>
 
-using namespace std;
-
-void camera_group_t::release() noexcept {
-    // close all devices
-    for (uint16_t id = 0u; id < max_camera_count; ++id) close_device(id);
-
-    // release all metadata
-    for (auto& meta : metadata_set)
-        if (meta) {
-            ACameraMetadata_free(meta);
-            meta = nullptr;
-        }
-
-    // remove id list
-    if (id_list) ACameraManager_deleteCameraIdList(id_list);
-    id_list = nullptr;
-
-    // release manager (camera service)
-    if (manager) ACameraManager_delete(manager);
-    manager = nullptr;
+void context_on_device_disconnected([[maybe_unused]] ndk_camera_manager_t& context, ACameraDevice* device) noexcept {
+    const char* id = ACameraDevice_getId(device);
+    spdlog::error("on_device_disconnect: {}", id);
 }
 
-camera_status_t camera_group_t::open_device(uint16_t id, ACameraDevice_StateCallbacks& callbacks) noexcept {
-    auto& device = this->device_set[id];
-    auto status = ACameraManager_openCamera(          //
-        this->manager, this->id_list->cameraIds[id],  //
-        addressof(callbacks), addressof(device));
-    return status;
+void context_on_device_error([[maybe_unused]] ndk_camera_manager_t& context, ACameraDevice* device,
+                             int error) noexcept {
+    const char* id = ACameraDevice_getId(device);
+    spdlog::error("on_device_error: {} {}", id, error);
 }
 
-// Notice that this routine doesn't free metadata
-void camera_group_t::close_device(uint16_t id) noexcept {
-    // close session
-    auto& session = this->session_set[id];
-    if (session) {
-        spdlog::warn("session for device {} is alive. abort/closing...", id);
+// session state callbacks
 
-        // Abort all kind of requests
-        ACameraCaptureSession_abortCaptures(session);
-        ACameraCaptureSession_stopRepeating(session);
-        // close
-        ACameraCaptureSession_close(session);
-        session = nullptr;
+void context_on_session_active(ndk_camera_manager_t&, ACameraCaptureSession*) noexcept {
+    spdlog::debug("on_session_active");
+}
+
+void context_on_session_closed(ndk_camera_manager_t&, ACameraCaptureSession*) noexcept {
+    spdlog::warn("on_session_closed");
+}
+
+void context_on_session_ready(ndk_camera_manager_t&, ACameraCaptureSession*) noexcept {
+    spdlog::debug("on_session_ready");
+}
+
+// capture callbacks
+
+void context_on_capture_started(ndk_camera_manager_t&, ACameraCaptureSession*,
+                                [[maybe_unused]] const ACaptureRequest* request, uint64_t time_point) noexcept {
+    spdlog::debug("context_on_capture_started  : {}", time_point);
+}
+
+void context_on_capture_progressed(ndk_camera_manager_t&, ACameraCaptureSession*,
+                                   [[maybe_unused]] ACaptureRequest* request, const ACameraMetadata* result) noexcept {
+    camera_status_t status = ACAMERA_OK;
+    ACameraMetadata_const_entry entry{};
+    uint64_t time_point = 0;
+    // ACAMERA_SENSOR_TIMESTAMP
+    // ACAMERA_SENSOR_INFO_TIMESTAMP_SOURCE
+    // ACAMERA_SENSOR_FRAME_DURATION
+    status = ACameraMetadata_getConstEntry(result, ACAMERA_SENSOR_TIMESTAMP, &entry);
+    if (status == ACAMERA_OK) time_point = static_cast<uint64_t>(*(entry.data.i64));
+
+    spdlog::debug("context_on_capture_progressed: {}", time_point);
+}
+
+void context_on_capture_completed(ndk_camera_manager_t&, ACameraCaptureSession*,
+                                  [[maybe_unused]] ACaptureRequest* request, const ACameraMetadata* result) noexcept {
+    camera_status_t status = ACAMERA_OK;
+    ACameraMetadata_const_entry entry{};
+    uint64_t time_point = 0;
+    // ACAMERA_SENSOR_TIMESTAMP
+    // ACAMERA_SENSOR_INFO_TIMESTAMP_SOURCE
+    // ACAMERA_SENSOR_FRAME_DURATION
+    status = ACameraMetadata_getConstEntry(result, ACAMERA_SENSOR_TIMESTAMP, &entry);
+    if (status == ACAMERA_OK) time_point = static_cast<uint64_t>(*(entry.data.i64));
+
+    spdlog::debug("context_on_capture_completed: {}", time_point);
+}
+
+void context_on_capture_failed(ndk_camera_manager_t&, ACameraCaptureSession*, [[maybe_unused]] ACaptureRequest* request,
+                               ACameraCaptureFailure* failure) noexcept {
+    spdlog::error("context_on_capture_failed {} {} {} {}", failure->frameNumber, failure->reason, failure->sequenceId,
+                  failure->wasImageCaptured);
+}
+
+void context_on_capture_buffer_lost(ndk_camera_manager_t&, ACameraCaptureSession*,
+                                    [[maybe_unused]] ACaptureRequest* request, ANativeWindow*,
+                                    [[maybe_unused]] int64_t frame) noexcept {
+    spdlog::error("context_on_capture_buffer_lost");
+}
+
+void context_on_capture_sequence_abort(ndk_camera_manager_t&, ACameraCaptureSession*,
+                                       [[maybe_unused]] int sequence) noexcept {
+    spdlog::error("context_on_capture_sequence_abort");
+}
+
+void context_on_capture_sequence_complete(ndk_camera_manager_t&, ACameraCaptureSession*, [[maybe_unused]] int sequence,
+                                          [[maybe_unused]] int64_t frame) noexcept {
+    spdlog::debug("context_on_capture_sequence_complete");
+}
+
+const char* ndk_camera_error_category_t::name() const noexcept { return "ACAMERA_ERROR"; }
+
+std::string ndk_camera_error_category_t::message(int status) const {
+    return get_message(static_cast<camera_status_t>(status));
+}
+
+const char* ndk_camera_error_category_t::get_message(camera_status_t status) noexcept {
+#define CASE_RETURN(label) \
+    case label:            \
+        return #label;
+    switch (status) {
+        CASE_RETURN(ACAMERA_OK);
+        CASE_RETURN(ACAMERA_ERROR_INVALID_PARAMETER);
+        CASE_RETURN(ACAMERA_ERROR_CAMERA_DISCONNECTED);
+        CASE_RETURN(ACAMERA_ERROR_NOT_ENOUGH_MEMORY);
+        CASE_RETURN(ACAMERA_ERROR_METADATA_NOT_FOUND);
+        CASE_RETURN(ACAMERA_ERROR_CAMERA_DEVICE);
+        CASE_RETURN(ACAMERA_ERROR_CAMERA_SERVICE);
+        CASE_RETURN(ACAMERA_ERROR_SESSION_CLOSED);
+        CASE_RETURN(ACAMERA_ERROR_INVALID_OPERATION);
+        CASE_RETURN(ACAMERA_ERROR_STREAM_CONFIGURE_FAIL);
+        CASE_RETURN(ACAMERA_ERROR_CAMERA_IN_USE);
+        CASE_RETURN(ACAMERA_ERROR_MAX_CAMERA_IN_USE);
+        CASE_RETURN(ACAMERA_ERROR_CAMERA_DISABLED);
+        CASE_RETURN(ACAMERA_ERROR_PERMISSION_DENIED);
+        CASE_RETURN(ACAMERA_ERROR_UNSUPPORTED_OPERATION);
+        default:
+            return "ACAMERA_ERROR_UNKNOWN";
     }
-    // close device
-    auto& device = this->device_set[id];
-    if (device) {
-        // Producing meesage like following
+#undef CASE_RETURN
+}
+
+ndk_camera_error_category_t& get_ndk_camera_errors() noexcept {
+    static ndk_camera_error_category_t singleton{};
+    return singleton;
+}
+
+ndk_camera_manager_t::ndk_camera_manager_t() noexcept(false) : manager{ACameraManager_create()} {
+    if (auto status = ACameraManager_getCameraIdList(manager, &id_list); status != ACAMERA_OK)
+        throw std::system_error{status, get_ndk_camera_errors(), "ACameraManager_getCameraIdList"};
+    auto count = id_list->numCameras;
+    for (int i = 0; i < count; ++i) {
+        const char* camera = id_list->cameraIds[i];
+        camera_status_t status = ACameraManager_getCameraCharacteristics(manager, camera, &metadatas[i]);
+        if (status != ACAMERA_OK) spdlog::warn("{}: {}", "ACameraManager_getCameraCharacteristics", status);
+    }
+}
+
+ndk_camera_manager_t::~ndk_camera_manager_t() noexcept {
+    for (auto meta : metadatas)
+        if (meta) ACameraMetadata_free(meta);
+    if (id_list) ACameraManager_deleteCameraIdList(id_list);
+    if (manager) ACameraManager_delete(manager);
+}
+
+uint32_t ndk_camera_manager_t::count() const noexcept { return static_cast<uint32_t>(id_list->numCameras); }
+
+uint32_t ndk_camera_manager_t::get_index(ACameraDevice* device) const noexcept {
+    auto _id = ACameraDevice_getId(device);
+    std::string_view expected{_id, strnlen(_id, 250)};
+    for (int i = 0; i < id_list->numCameras; ++i) {
+        std::string_view name{id_list->cameraIds[i], strnlen(id_list->cameraIds[i], 250)};
+        if (name == expected) return static_cast<uint32_t>(i);
+    }
+    return UINT32_MAX;
+}
+
+ACameraMetadata* ndk_camera_manager_t::get_metadata(ACameraDevice* device) const noexcept {
+    auto idx = get_index(device);
+    if (idx == UINT32_MAX) return nullptr;
+    return metadatas[idx];
+}
+
+camera_status_t ndk_camera_manager_t::open_device(uint32_t idx, ndk_camera_session_t& info,
+                                                  ACameraDevice_StateCallbacks& callbacks) noexcept {
+    return ACameraManager_openCamera(manager, id_list->cameraIds[idx], &callbacks, &info.device);
+}
+
+void ndk_camera_manager_t::close_device(ndk_camera_session_t& info) noexcept {
+    if (info.device == nullptr) return;
+    if (info.session) close_session(info);
+    /// @note Seems like ffmpeg also has same issue, but can't sure about it.
+    if (info.device) {
+        spdlog::warn("ACameraDevice {:p}: closing...", static_cast<void*>(info.device));
+        //
         // W/ACameraCaptureSession: Device is closed but session 0 is not
         // notified
         //
-        // Seems like ffmpeg also has same issue, but can't sure about its
-        // comment...
-        //
-        spdlog::warn("closing device {} ...", id);
-
-        ACameraDevice_close(device);
-        device = nullptr;
+        ACameraDevice_close(info.device);
+        info.device = nullptr;
     }
 }
 
-camera_status_t camera_group_t::start_repeat(uint16_t id, ANativeWindow* window,
-                                             ACameraCaptureSession_stateCallbacks& on_session_changed,
-                                             ACameraCaptureSession_captureCallbacks& on_capture_event) noexcept {
-    camera_status_t status = ACAMERA_OK;
+struct camera_output_target_t {
+    ACameraOutputTarget* handle = nullptr;
 
-    // ---- target surface for camera ----
-    auto target = camera_output_target_ptr{[=]() {
-                                               ACameraOutputTarget* target{};
-                                               ACameraOutputTarget_create(window, addressof(target));
-                                               return target;
-                                           }(),
-                                           ACameraOutputTarget_free};
-    // (target.get() != nullptr);
+   public:
+    explicit camera_output_target_t(ANativeWindow* window) { ACameraOutputTarget_create(window, &handle); }
+    ~camera_output_target_t() { ACameraOutputTarget_free(handle); }
+};
 
-    // ---- capture request (preview) ----
-    auto request = capture_request_ptr{[=]() {
-                                           ACaptureRequest* ptr{};
-                                           // capture as a preview
-                                           // TEMPLATE_RECORD, TEMPLATE_PREVIEW, TEMPLATE_MANUAL,
-                                           const auto status = ACameraDevice_createCaptureRequest(
-                                               this->device_set[id], TEMPLATE_PREVIEW, &ptr);
-                                           return ptr;
-                                       }(),
-                                       ACaptureRequest_free};
+/// @brief Designate target surface in request
+struct capture_request_t {
+    ACaptureRequest* handle = nullptr;
+    ACameraOutputTarget* target = nullptr;
 
-    // `ACaptureRequest` == how to capture
-    // detailed config comes here...
-    // ACaptureRequest_setEntry_*
-    // - ACAMERA_REQUEST_MAX_NUM_OUTPUT_STREAMS
-    // -
-
-    // designate target surface in request
-    status = ACaptureRequest_addTarget(request.get(), target.get());
-    // (status == ACAMERA_OK);
-    // ---- session output ----
-
-    // container for multiplexing of session output
-    auto container = capture_session_output_container_ptr{[]() {
-                                                              ACaptureSessionOutputContainer* container{};
-                                                              ACaptureSessionOutputContainer_create(&container);
-                                                              return container;
-                                                          }(),
-                                                          ACaptureSessionOutputContainer_free};
-    // (container.get() != nullptr);
-
-    // session output
-    auto output = capture_session_output_ptr{[=]() {
-                                                 ACaptureSessionOutput* output{};
-                                                 ACaptureSessionOutput_create(window, &output);
-                                                 return output;
-                                             }(),
-                                             ACaptureSessionOutput_free};
-    // (output.get() != nullptr);
-
-    status = ACaptureSessionOutputContainer_add(container.get(), output.get());
-    // (status == ACAMERA_OK);
-
-    // ---- create a session ----
-    status = ACameraDevice_createCaptureSession(this->device_set[id], container.get(), addressof(on_session_changed),
-                                                addressof(this->session_set[id]));
-    // (status == ACAMERA_OK);
-
-    // ---- set request ----
-    array<ACaptureRequest*, 1> batch_request{};
-    batch_request[0] = request.get();
-
-    status = ACameraCaptureSession_setRepeatingRequest(this->session_set[id], addressof(on_capture_event),
-                                                       batch_request.size(), batch_request.data(),
-                                                       addressof(this->seq_id_set[id]));
-    // (status == ACAMERA_OK);
-
-    status = ACaptureSessionOutputContainer_remove(container.get(), output.get());
-    // (status == ACAMERA_OK);
-    status = ACaptureRequest_removeTarget(request.get(), target.get());
-    // (status == ACAMERA_OK);
-
-    return status;
-}
-
-void camera_group_t::stop_repeat(uint16_t id) noexcept {
-    auto& session = this->session_set[id];
-    if (session) {
-        spdlog::warn("stop_repeat for session {} ", id);
-
-        // follow `ACameraCaptureSession_setRepeatingRequest`
-        ACameraCaptureSession_stopRepeating(session);
-
-        ACameraCaptureSession_close(session);
-        session = nullptr;
+   public:
+    /// @param type TEMPLATE_RECORD, TEMPLATE_PREVIEW, TEMPLATE_MANUAL
+    capture_request_t(ACameraDevice* device, ACameraDevice_request_template type) {
+        if (auto status = ACameraDevice_createCaptureRequest(device, type, &handle); status != ACAMERA_OK)
+            throw std::system_error{status, get_ndk_camera_errors(), "ACameraDevice_createCaptureRequest"};
     }
-    this->seq_id_set[id] = CAPTURE_SEQUENCE_ID_NONE;
-}
-
-camera_status_t camera_group_t::start_capture(uint16_t id, ANativeWindow* window,
-                                              ACameraCaptureSession_stateCallbacks& on_session_changed,
-                                              ACameraCaptureSession_captureCallbacks& on_capture_event) noexcept {
-    camera_status_t status = ACAMERA_OK;
-
-    // ---- target surface for camera ----
-    auto target = camera_output_target_ptr{[=]() {
-                                               ACameraOutputTarget* target{};
-                                               ACameraOutputTarget_create(window, addressof(target));
-                                               return target;
-                                           }(),
-                                           ACameraOutputTarget_free};
-    // (target.get() != nullptr);
-
-    // ---- capture request (preview) ----
-    auto request = capture_request_ptr{[](ACameraDevice* device) {
-                                           ACaptureRequest* ptr{};
-                                           // capture as a preview
-                                           // TEMPLATE_RECORD, TEMPLATE_PREVIEW,
-                                           // TEMPLATE_MANUAL,
-                                           const auto status =
-                                               ACameraDevice_createCaptureRequest(device, TEMPLATE_STILL_CAPTURE, &ptr);
-                                           return ptr;
-                                       }(this->device_set[id]),
-                                       ACaptureRequest_free};
-    // (request.get() != nullptr);
-
-    // `ACaptureRequest` == how to capture
-    // detailed config comes here...
-    // ACaptureRequest_setEntry_*
-    // - ACAMERA_REQUEST_MAX_NUM_OUTPUT_STREAMS
-    // -
-
-    // designate target surface in request
-    status = ACaptureRequest_addTarget(request.get(), target.get());
-    // (status == ACAMERA_OK);
-    // defer    ACaptureRequest_removeTarget;
-
-    // ---- session output ----
-
-    // container for multiplexing of session output
-    auto container = capture_session_output_container_ptr{[]() {
-                                                              ACaptureSessionOutputContainer* container{};
-                                                              ACaptureSessionOutputContainer_create(&container);
-                                                              return container;
-                                                          }(),
-                                                          ACaptureSessionOutputContainer_free};
-    // (container.get() != nullptr);
-
-    // session output
-    auto output = capture_session_output_ptr{[=]() {
-                                                 ACaptureSessionOutput* output{};
-                                                 ACaptureSessionOutput_create(window, &output);
-                                                 return output;
-                                             }(),
-                                             ACaptureSessionOutput_free};
-    // (output.get() != nullptr);
-
-    status = ACaptureSessionOutputContainer_add(container.get(), output.get());
-    // (status == ACAMERA_OK);
-    // defer ACaptureSessionOutputContainer_remove
-
-    // ---- create a session ----
-    status = ACameraDevice_createCaptureSession(this->device_set[id], container.get(), addressof(on_session_changed),
-                                                addressof(this->session_set[id]));
-    // (status == ACAMERA_OK);
-
-    // ---- set request ----
-    array<ACaptureRequest*, 1> batch_request{};
-    batch_request[0] = request.get();
-
-    status = ACameraCaptureSession_capture(this->session_set[id], addressof(on_capture_event), batch_request.size(),
-                                           batch_request.data(), addressof(this->seq_id_set[id]));
-    // (status == ACAMERA_OK);
-
-    status = ACaptureSessionOutputContainer_remove(container.get(), output.get());
-    // (status == ACAMERA_OK);
-
-    status = ACaptureRequest_removeTarget(request.get(), target.get());
-    // (status == ACAMERA_OK);
-
-    return status;
-}
-
-void camera_group_t::stop_capture(uint16_t id) noexcept {
-    auto& session = this->session_set[id];
-    if (session) {
-        spdlog::warn("stop_capture for session {} ", id);
-
-        // follow `ACameraCaptureSession_capture`
-        ACameraCaptureSession_abortCaptures(session);
-
-        ACameraCaptureSession_close(session);
-        session = nullptr;
+    ~capture_request_t() {
+        if (target) ACaptureRequest_removeTarget(handle, target);
+        ACaptureRequest_free(handle);
     }
-    this->seq_id_set[id] = 0;
-}
 
-auto camera_group_t::get_facing(uint16_t id) noexcept -> uint16_t {
-    // const ACameraMetadata*
-    const auto* metadata = metadata_set[id];
-
-    ACameraMetadata_const_entry entry{};
-    ACameraMetadata_getConstEntry(metadata, ACAMERA_LENS_FACING, &entry);
-
-    // lens facing
-    const auto facing = *(entry.data.u8);
-    // (facing == ACAMERA_LENS_FACING_FRONT ||  // ACAMERA_LENS_FACING_FRONT
-    //  facing == ACAMERA_LENS_FACING_BACK ||   // ACAMERA_LENS_FACING_BACK
-    //  facing == ACAMERA_LENS_FACING_EXTERNAL  // ACAMERA_LENS_FACING_EXTERNAL
-    // );
-    return facing;
-}
-
-/// @see  NdkCameraError.h
-const char* camera_error_message(camera_status_t status) noexcept {
-    switch (status) {
-        case ACAMERA_ERROR_UNKNOWN:
-            return "Camera operation has failed due to an unspecified cause.";
-        case ACAMERA_ERROR_INVALID_PARAMETER:
-            return "Camera operation has failed due to an invalid parameter being "
-                   "passed to the method.";
-        case ACAMERA_ERROR_CAMERA_DISCONNECTED:
-            return "Camera operation has failed because the camera device has been "
-                   "closed, possibly because a higher-priority client has taken "
-                   "ownership of the camera device.";
-        case ACAMERA_ERROR_NOT_ENOUGH_MEMORY:
-            return "Camera operation has failed due to insufficient memory.";
-        case ACAMERA_ERROR_METADATA_NOT_FOUND:
-            return "Camera operation has failed due to the requested metadata tag "
-                   "cannot be found in input. ACameraMetadata or ACaptureRequest";
-        case ACAMERA_ERROR_CAMERA_DEVICE:
-            return "Camera operation has failed and the camera device has "
-                   "encountered a fatal error and needs to be re-opened before it "
-                   "can be used again.";
-        case ACAMERA_ERROR_CAMERA_SERVICE:
-            /**
-             * Camera operation has failed and the camera service has encountered a
-             * fatal error.
-             *
-             * <p>The Android device may need to be shut down and restarted to
-             * restore camera function, or there may be a persistent hardware
-             * problem.</p>
-             *
-             * <p>An attempt at recovery may be possible by closing the
-             * ACameraDevice and the ACameraManager, and trying to acquire all
-             * resources again from scratch.</p>
-             */
-            return "Camera operation has failed and the camera service has "
-                   "encountered a fatal error.";
-        case ACAMERA_ERROR_SESSION_CLOSED:
-            return "The ACameraCaptureSession has been closed and cannot perform "
-                   "any operation other than ACameraCaptureSession_close.";
-        case ACAMERA_ERROR_INVALID_OPERATION:
-            return "Camera operation has failed due to an invalid internal "
-                   "operation. Usually this is due to a low-level problem that may "
-                   "resolve itself on retry";
-        case ACAMERA_ERROR_STREAM_CONFIGURE_FAIL:
-            return "Camera device does not support the stream configuration "
-                   "provided by application in ACameraDevice_createCaptureSession.";
-        case ACAMERA_ERROR_CAMERA_IN_USE:
-            return "Camera device is being used by another higher priority camera "
-                   "API client.";
-        case ACAMERA_ERROR_MAX_CAMERA_IN_USE:
-            return "The system-wide limit for number of open cameras or camera "
-                   "resources has been reached, and more camera devices cannot be "
-                   "opened until previous instances are closed.";
-        case ACAMERA_ERROR_CAMERA_DISABLED:
-            return "The camera is disabled due to a device policy, and cannot be "
-                   "opened.";
-        case ACAMERA_ERROR_PERMISSION_DENIED:
-            return "The application does not have permission to open camera.";
-        default:
-            return "ACAMERA_OK";
+    void bind(ACameraOutputTarget* target) noexcept(false) {
+        this->target = target;
+        auto status = ACaptureRequest_addTarget(handle, target);
+        if (status != ACAMERA_OK) throw std::system_error{status, get_ndk_camera_errors(), "ACaptureRequest_addTarget"};
     }
+};
+
+/// @brief container for multiplexing of session output
+struct session_output_container_t {
+    ACaptureSessionOutputContainer* handle = nullptr;
+    ACaptureSessionOutput* output = nullptr;
+
+   public:
+    session_output_container_t() {
+        auto status = ACaptureSessionOutputContainer_create(&handle);
+        if (status != ACAMERA_OK)
+            throw std::system_error{status, get_ndk_camera_errors(), "ACaptureSessionOutputContainer_create"};
+    }
+    ~session_output_container_t() {
+        if (output) ACaptureSessionOutputContainer_remove(handle, output);
+        ACaptureSessionOutputContainer_free(handle);
+    }
+
+    void bind(ACaptureSessionOutput* output) noexcept(false) {
+        this->output = output;
+        auto status = ACaptureSessionOutputContainer_add(handle, output);
+        if (status != ACAMERA_OK)
+            throw std::system_error{status, get_ndk_camera_errors(), "ACaptureSessionOutputContainer_add"};
+    }
+};
+
+struct session_output_t {
+    ACaptureSessionOutput* handle = nullptr;
+
+   public:
+    explicit session_output_t(ANativeWindow* window) {
+        auto status = ACaptureSessionOutput_create(window, &handle);
+        if (status != ACAMERA_OK)
+            throw std::system_error{status, get_ndk_camera_errors(), "ACaptureSessionOutput_create"};
+    }
+    ~session_output_t() { ACaptureSessionOutput_free(handle); }
+};
+
+camera_status_t ndk_camera_manager_t::start_capture(
+    ndk_camera_session_t& info, ANativeWindow* window, ACameraCaptureSession_stateCallbacks& on_state_change,
+    ACameraCaptureSession_captureCallbacks& on_capture_event) noexcept(false) {
+    session_output_container_t outputs{};
+    session_output_t output{window};
+    outputs.bind(output.handle);
+    if (auto status = ACameraDevice_createCaptureSession(info.device, outputs.handle, &on_state_change, &info.session);
+        status != ACAMERA_OK) {
+        spdlog::error("{}: {}", "ACameraDevice_createCaptureSession", status);
+        return status;
+    }
+    info.repeating = false;
+
+    camera_output_target_t target{window};
+    capture_request_t request{info.device, TEMPLATE_STILL_CAPTURE};
+    request.bind(target.handle);
+    if (auto status =
+            ACameraCaptureSession_capture(info.session, &on_capture_event, 1, &request.handle, &info.sequence_id);
+        status != ACAMERA_OK) {
+        spdlog::error("{}: {}", "ACameraCaptureSession_capture", status);
+        return status;
+    }
+    return ACAMERA_OK;
+}
+
+camera_status_t ndk_camera_manager_t::start_repeat(
+    ndk_camera_session_t& info, ANativeWindow* window, ACameraCaptureSession_stateCallbacks& on_state_change,
+    ACameraCaptureSession_captureCallbacks& on_capture_event) noexcept(false) {
+    session_output_container_t outputs{};
+    session_output_t output{window};
+    outputs.bind(output.handle);
+    if (auto status = ACameraDevice_createCaptureSession(info.device, outputs.handle, &on_state_change, &info.session);
+        status != ACAMERA_OK) {
+        spdlog::error("{}: {}", "ACameraDevice_createCaptureSession", status);
+        return status;
+    }
+    info.repeating = true;
+
+    camera_output_target_t target{window};
+    capture_request_t request{info.device, TEMPLATE_PREVIEW};
+    request.bind(target.handle);
+    if (auto status = ACameraCaptureSession_setRepeatingRequest(info.session, &on_capture_event, 1, &request.handle,
+                                                                &info.sequence_id);
+        status != ACAMERA_OK) {
+        spdlog::error("{}: {}", "ACameraCaptureSession_setRepeatingRequest", status);
+        return status;
+    }
+    return ACAMERA_OK;
+}
+
+void ndk_camera_manager_t::close_session(ndk_camera_session_t& info) noexcept(false) {
+    if (info.session == nullptr) return;
+    spdlog::warn("ACameraCaptureSession {:p}: aborting...", static_cast<void*>(info.session));
+    if (info.repeating) ACameraCaptureSession_stopRepeating(info.session);
+    ACameraCaptureSession_abortCaptures(info.session);
+    ACameraCaptureSession_close(info.session);
+    info.session = nullptr;
 }
