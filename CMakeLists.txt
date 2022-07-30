@@ -3,7 +3,6 @@
 # See https://github.com/microsoft/vcpkg/blob/master/docs/examples/vcpkg_android_example_cmake_script/CMakeLists.txt
 #
 cmake_minimum_required(VERSION 3.21)
-# VCPKG_TARGET_TRIPLET is required
 include(${CMAKE_CURRENT_SOURCE_DIR}/scripts/vcpkg_android.cmake)
 
 project(muffin LANGUAGES CXX VERSION 1.3.0)
@@ -14,11 +13,16 @@ include(GNUInstallDirs)
 include(CheckIncludeFileCXX)
 
 # list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-
+find_library(NDK_CAMERA_LIBPATH NAMES camera2ndk REQUIRED)
+find_library(NDK_MEDIA_LIBPATH NAMES mediandk REQUIRED)
+find_library(EGL_LIBPATH NAMES EGL REQUIRED)
+find_library(GLES_LIBPATH NAMES GLESv3 GLESv2 REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(Vulkan REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
-# find_path(TFLITE_INCLUDE_DIR NAMES "tensorflow/lite/c/c_api.h" PATHS ${PROJECT_SOURCE_DIR}/jniLibs/include REQUIRED)
+
+# find_path(TFLITE_INCLUDE_DIR NAMES "tensorflow/lite/builtin_ops.h" PATH_SUFFIXES "headers" REQUIRED NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH)
+# find_library(TFLITE_LIBRARY NAMES tensorflow-lite tensorflowlite_jni REQUIRED NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH)
 
 check_include_file_cxx("vulkan/vulkan.h" found_vulkan)
 check_include_file_cxx("GLES3/gl3.h" found_gles3)
@@ -68,7 +72,7 @@ PROPERTIES
 
 target_include_directories(muffin
 PRIVATE
-    jniLibs/include # ${TFLITE_INCLUDE_DIR}
+    jniLibs/headers
     src
 )
 
@@ -85,20 +89,22 @@ PRIVATE
 
 target_link_directories(muffin
 PRIVATE
-    # ${CMAKE_BINARY_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}/lib
+    jniLibs/jni/${ANDROID_ABI}
 )
 
 target_link_libraries(muffin
 PRIVATE
-    ${CMAKE_DL_LIBS} ${ANDROID_STL} m android log EGL GLESv3 camera2ndk mediandk
+    ${CMAKE_DL_LIBS} ${ANDROID_STL} m android log
+    ${EGL_LIBPATH} ${GLES_LIBPATH} ${NDK_CAMERA_LIBPATH} # ${NDK_MEDIA_LIBPATH}
     Vulkan::Vulkan
     fmt::fmt-header-only spdlog::spdlog_header_only
+    tensorflowlite_jni
 )
 
-target_link_options(muffin
-PRIVATE
-    # ...
-)
+# target_link_options(muffin
+# PRIVATE
+#     # ...
+# )
 
 install(TARGETS         muffin
         EXPORT          muffin-config

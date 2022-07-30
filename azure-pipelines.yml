@@ -34,6 +34,11 @@ jobs:
       - checkout: self
       - powershell: brew install ninja tree
         displayName: "Install Homebrew packages"
+      - powershell: |
+          New-Item -Type Directory -Force -Name "externals"
+          Invoke-WebRequest "https://search.maven.org/remotecontent?filepath=org/tensorflow/tensorflow-lite/2.9.0/tensorflow-lite-2.9.0.aar" -OutFile "externals/tensorflow-lite-2.9.0.aar"
+          Expand-Archive -Path "externals/tensorflow-lite-2.9.0.aar" -DestinationPath jniLibs
+        displayName: "Download/Extract TensorflowLite 2.9.0(aar)"
       # - bash: |
       #     bash ./scripts/azure-pipelines.sh > /dev/null
       #     touch local.properties
@@ -112,6 +117,11 @@ jobs:
       - checkout: self
       - powershell: sudo apt-get install -y --fix-missing ninja-build tree curl zip unzip tar rsync
         displayName: "Install: APT packages"
+      - powershell: |
+          New-Item -Type Directory -Force -Name "externals"
+          Invoke-WebRequest "https://search.maven.org/remotecontent?filepath=org/tensorflow/tensorflow-lite/2.9.0/tensorflow-lite-2.9.0.aar" -OutFile "externals/tensorflow-lite-2.9.0.aar"
+          Expand-Archive -Path "externals/tensorflow-lite-2.9.0.aar" -DestinationPath jniLibs
+        displayName: "Download/Extract TensorflowLite 2.9.0(aar)"
       - powershell: New-Item -Type Directory -Force ${env:VCPKG_DEFAULT_BINARY_CACHE}
       - task: Cache@2
         inputs:

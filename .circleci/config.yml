@@ -58,6 +58,12 @@ jobs:
             popd
             tree -L 1 ${VCPKG_ROOT}
       - run:
+          name: "Download/Extract TensorFlowLite 2.9.0(aar)"
+          command: |
+            mkdir -p "externals"
+            wget -q "https://search.maven.org/remotecontent?filepath=org/tensorflow/tensorflow-lite/2.9.0/tensorflow-lite-2.9.0.aar" -O "externals/tensorflow-lite-2.9.0.aar"
+            unzip -o "externals/tensorflow-lite-2.9.0.aar" -d jniLibs
+      - run:
           name: "Gradle: wrapper"
           command: gradle wrapper --info
       - run:
