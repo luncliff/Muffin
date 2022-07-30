@@ -1,7 +1,9 @@
 #include "muffin.hpp"
 
 #include <android/api-level.h>
+#include <android/dlext.h>
 #include <android/native_window_jni.h>
+#include <dlfcn.h>
 #include <spdlog/sinks/android_sink.h>
 #include <spdlog/spdlog.h>
 
@@ -43,3 +45,21 @@ void store_runtime_exception(JNIEnv* env, const char* message) noexcept {
 }
 
 static_assert(sizeof(void*) <= sizeof(jlong), "`jlong` must be able to contain `void*` pointer");
+
+native_loader_t::native_loader_t(const char* libname) noexcept(false) : native_loader_t{} { load(libname); }
+
+native_loader_t::~native_loader_t() noexcept {
+    if (handle) dlclose(handle);
+}
+
+void native_loader_t::load(const char* libname) noexcept(false) {
+    android_dlextinfo info{};
+    info.flags = ANDROID_DLEXT_FORCE_LOAD;
+    handle = android_dlopen_ext(libname, RTLD_NOW, &info);
+    if (handle == nullptr) throw std::system_error{errno, std::system_category(), dlerror()};
+}
+
+void* native_loader_t::get_proc_address(const char* proc) const noexcept {
+    spdlog::trace("{:s}: {:s}", "dlsym", proc);
+    return dlsym(handle, proc);
+}

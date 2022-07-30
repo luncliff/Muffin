@@ -14,3 +14,15 @@ static_assert(__cplusplus >= 201703L, "requires C++ 17 or later");
 
 #include "egl_context.hpp"
 #include "egl_surface.hpp"
+
+class native_loader_t final {
+    void* handle;
+
+   public:
+    native_loader_t() noexcept = default;
+    explicit native_loader_t(const char* libname) noexcept(false);
+    ~native_loader_t() noexcept;
+
+    void load(const char* libname) noexcept(false);
+    void* get_proc_address(const char* proc) const noexcept;
+};
