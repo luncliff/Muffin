@@ -87,6 +87,9 @@ android {
         // pickFirst "jniLibs/**/*.so"
         exclude "META-INF/LICENSE*" // JUnit 5 will bundle in files
     }
+    aaptOptions {
+        noCompress "tflite"
+    }
 
     testOptions {
         unitTests.returnDefaultValues = true

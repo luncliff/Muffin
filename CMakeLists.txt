@@ -18,6 +18,7 @@ include(CheckIncludeFileCXX)
 find_package(ZLIB REQUIRED)
 find_package(Vulkan REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
+# find_path(TFLITE_INCLUDE_DIR NAMES "tensorflow/lite/c/c_api.h" PATHS ${PROJECT_SOURCE_DIR}/jniLibs/include REQUIRED)
 
 check_include_file_cxx("vulkan/vulkan.h" found_vulkan)
 check_include_file_cxx("GLES3/gl3.h" found_gles3)
@@ -53,6 +54,7 @@ add_library(muffin SHARED
     ${headers} src/muffin.cpp
     src/egl_context.hpp src/egl_context.cpp src/egl_surface.hpp src/egl_surface.cpp src/egl_jni.cpp
     src/ndk_camera.hpp src/ndk_camera.cpp  src/ndk_camera_jni.cpp
+    src/inference.hpp src/inference.cpp src/inference_jni.cpp
     src/worker.cpp
 )
 
@@ -66,7 +68,7 @@ PROPERTIES
 
 target_include_directories(muffin
 PRIVATE
-    include
+    jniLibs/include # ${TFLITE_INCLUDE_DIR}
     src
 )
 
