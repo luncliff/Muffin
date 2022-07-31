@@ -51,7 +51,8 @@ list(APPEND headers src/muffin.hpp)
 
 add_library(muffin SHARED
     ${headers} src/muffin.cpp
-    src/egl_context.hpp src/egl_context.cpp src/egl_surface.hpp src/egl_surface.cpp src/egl_jni.cpp
+    src/egl_context.hpp src/egl_context.cpp src/egl_surface.hpp src/egl_surface.cpp
+    src/egl_android.hpp src/egl_android.cpp
     src/ndk_camera.hpp src/ndk_camera.cpp  src/ndk_camera_jni.cpp
     src/worker.cpp
 )

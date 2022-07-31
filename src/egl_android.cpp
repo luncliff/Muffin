@@ -1,11 +1,49 @@
+#include "egl_android.hpp"
+
 #include <android/native_window_jni.h>
 #include <spdlog/spdlog.h>
 
 #include <chrono>
 #include <string>
-#include <string_view>
 
 #include "muffin.hpp"
+
+std::vector<std::string_view> get_egl_extensions(EGLDisplay display) noexcept {
+    std::vector<std::string_view> output{};
+    auto exts = reinterpret_cast<const char*>(eglQueryString(display, EGL_EXTENSIONS));
+    ptrdiff_t offset = 0;
+    ptrdiff_t len = 0;
+    auto txt = exts;
+    while (exts[offset] != 0) {
+        if (exts[offset] == ' ') {
+            output.emplace_back(txt, len);
+            ++offset;
+            len = 0;
+            txt = exts + offset;
+            continue;
+        }
+        ++offset;
+        ++len;
+    }
+    return output;
+}
+
+void get_egl_extensions(EGLDisplay display, egl_android_t& info) noexcept {
+    info = egl_android_t{};
+    for (auto extension : get_egl_extensions(display)) {
+        if (extension == "EGL_ANDROID_blob_cache") info.blob_cache = true;
+        if (extension == "EGL_ANDROID_create_native_client_buffer") info.create_native_client_buffer = true;
+        if (extension == "EGL_ANDROID_framebuffer_target") info.framebuffer_target = true;
+        if (extension == "EGL_ANDROID_front_buffer_auto_refresh") info.front_buffer_auto_refresh = true;
+        if (extension == "EGL_ANDROID_get_frame_timestamps") info.get_frame_timestamps = true;
+        if (extension == "EGL_ANDROID_get_native_client_buffer") info.get_native_client_buffer = true;
+        if (extension == "EGL_ANDROID_GLES_layers") info.GLES_layers = true;
+        if (extension == "EGL_ANDROID_image_native_buffer") info.image_native_buffer = true;
+        if (extension == "EGL_ANDROID_native_fence_sync") info.native_fence_sync = true;
+        if (extension == "EGL_ANDROID_presentation_time") info.presentation_time = true;
+        if (extension == "EGL_ANDROID_recordable") info.recordable = true;
+    }
+}
 
 void store_runtime_exception(JNIEnv* env, const char* message) noexcept;
 

@@ -18,6 +18,16 @@ Template for Android NDK module
   * https://developer.android.com/studio/build/native-dependencies?hl=en
   * https://google.github.io/prefab/
 
+#### Android 
+
+* https://developer.android.com/ndk/reference/group/a-hardware-buffer
+* https://developer.android.com/ndk/guides/neuralnetworks
+
+#### EGL
+
+* https://github.com/fuyufjh/GraphicBuffer
+* https://registry.khronos.org/EGL/extensions/ANDROID/
+
 ## How to
 
 ### Setup
