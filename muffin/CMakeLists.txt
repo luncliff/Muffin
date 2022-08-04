@@ -4,7 +4,7 @@
 #
 cmake_minimum_required(VERSION 3.21)
 # VCPKG_TARGET_TRIPLET is required
-include(${CMAKE_CURRENT_SOURCE_DIR}/scripts/vcpkg_android.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/vcpkg_android.cmake)
 
 project(muffin LANGUAGES CXX VERSION 1.3.0)
 if(NOT ANDROID)

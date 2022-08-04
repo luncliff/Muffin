@@ -88,7 +88,7 @@ jobs:
       #   displayName: "Gradle: connectedAndroidTest"
       - task: CopyFiles@2
         inputs:
-          contents: "$(Build.SourcesDirectory)/build/outputs/aar/*.aar"
+          contents: "$(Build.SourcesDirectory)/muffin/build/outputs/aar/*.aar"
           targetFolder: "$(Build.ArtifactStagingDirectory)"
       - task: PublishBuildArtifacts@1
 

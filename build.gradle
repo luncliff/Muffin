@@ -1,135 +1,19 @@
-
-// https://developer.android.com/studio/build/native-dependencies?hl=en
-plugins {
-    id "com.android.library" // version "7.2.2"
-}
-repositories {
-    google()
-    mavenCentral()
-    maven { url "https://jitpack.io" }
-}
-
-import java.nio.file.Paths
-def vcpkg_root = Paths.get(System.getenv("VCPKG_ROOT")).toAbsolutePath()
-def vcpkg_toolchain_file = Paths.get(vcpkg_root.toString(), "scripts", "buildsystems", "vcpkg.cmake")
-println("Using vcpkg: ${vcpkg_toolchain_file}")
-def ndk_root = Paths.get(System.getenv("ANDROID_NDK_HOME")).toAbsolutePath()
-def ndk_toolchain_file = Paths.get(ndk_root.toString(), "build", "cmake", "android.toolchain.cmake")
-println("Using NDK: ${ndk_toolchain_file}")
-
-android {
-    compileSdk 32
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
     }
-    ndkVersion "24.0.8215888"
-    buildTypes {
-        debug {
-            debuggable true
-            jniDebuggable true
-            testCoverageEnabled true
-        }
-        release {
-            jniDebuggable true
-            minifyEnabled true
-        }
-    }
-    buildFeatures {
-        buildConfig = true
-        prefab = true
-        prefabPublishing = true
-    }
-    prefab {
-        muffin.headers "src"
-    }
+    dependencies {
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.10")
 
-    defaultConfig {
-        minSdkVersion 26
-        targetSdkVersion 32
-        ndk {
-            abiFilters "armeabi-v7a", "arm64-v8a", "x86_64"
-        }
-        // buildConfigField "String", "VERSION_NAME", "\"1.3.0\""
-        externalNativeBuild {
-            cmake {
-                cppFlags    "-Wall", "-Wextra", "-fno-rtti"
-                arguments   "-DANDROID_STL=c++_shared"
-                arguments   "-DANDROID_ARM_NEON=ON"
-                arguments   "-DCMAKE_TOOLCHAIN_FILE=${vcpkg_toolchain_file}"
-                arguments   "-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${ndk_toolchain_file}"
-                // targets     "muffin"
-            }
-        }
+        // https://developer.android.com/studio/releases/gradle-plugin
+        // see https://github.com/android/ndk/issues/1609
+        //
+        // Linux environment can't find the ninja in android_gradle_build.json
+        // If SUPPORT_PREFAB is not defined, Downgrade the AGP version and build without Prefab...
+        //
+        classpath("com.android.tools.build:gradle:7.2.2")
         // https://github.com/mannodermaus/android-junit5
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        testInstrumentationRunnerArgument "runnerBuilder", "de.mannodermaus.junit5.AndroidJUnit5Builder"
+        classpath("de.mannodermaus.gradle.plugins:android-junit5:1.8.2.1")
     }
-    externalNativeBuild {
-        cmake {
-            version "3.21.0+"
-            path file("CMakeLists.txt")
-        }
-    }
-    sourceSets {
-        main.setRoot("android")
-        main {
-            manifest.srcFile "android/AndroidManifest.xml"
-        }
-        androidTest.setRoot("android/test")
-        androidTest {
-            java.srcDir "android/test"
-            assets.srcDir "android/testAssets"
-        }
-    }
-
-    packagingOptions {
-        // pickFirst "jniLibs/**/*.so"
-        exclude "META-INF/LICENSE*" // JUnit 5 will bundle in files
-    }
-
-    testOptions {
-        unitTests.returnDefaultValues = true
-        unitTests.all {
-            failFast = false
-            testLogging {
-                events "passed", "skipped", "failed"
-                showStandardStreams = true
-                showCauses = true
-                showExceptions = true
-                showStackTraces = true
-                exceptionFormat = "full"
-            }
-        }
-    }
-}
-
-dependencies {
-    api "org.jetbrains.kotlin:kotlin-stdlib:1.7.10"
-
-    // https://search.maven.org/artifact/org.tensorflow/tensorflow-lite
-    // https://www.tensorflow.org/lite/performance/gpu_advanced
-    implementation "org.tensorflow:tensorflow-lite-gpu:2.8.0"
-
-    // https://developers.google.com/ar/develop/java/quickstart
-    api "com.google.ar:core:1.32.0"
-
-    api group: "androidx.core", name: "core", version: "1.8.0"
-
-    api group: "androidx.camera", name: "camera-core",      version: "1.1.0"
-    api group: "androidx.camera", name: "camera-camera2",   version: "1.1.0"
-    api group: "androidx.camera", name: "camera-lifecycle", version: "1.1.0"
-
-    // https://developer.android.com/training/testing/set-up-project#android-test-dependencies
-    androidTestImplementation   group: "androidx.test",     name: "core",   version: "1.4.0"
-    androidTestImplementation   group: "androidx.test",     name: "rules",  version: "1.4.0"
-    androidTestImplementation   group: "androidx.test",     name: "runner", version: "1.4.0"
-    androidTestImplementation   group: "androidx.test.ext", name: "junit",  version: "1.1.3"
-
-    androidTestImplementation   group: "org.junit.jupiter", name: "junit-jupiter-api",      version: "5.7.1"
-    androidTestImplementation   group: "org.junit.jupiter", name: "junit-jupiter-params",   version: "5.7.1"
-    androidTestRuntimeOnly      group: "org.junit.jupiter", name: "junit-jupiter-engine",   version: "5.7.1"
-
-    androidTestImplementation   group: "de.mannodermaus.junit5", name: "android-test-core",     version: "1.2.2"
-    androidTestRuntimeOnly      group: "de.mannodermaus.junit5", name: "android-test-runner",   version: "1.2.2"
 }
