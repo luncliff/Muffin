@@ -123,15 +123,16 @@ jobs:
         inputs:
           vcpkgGitCommitId: $(vcpkg.commit)
           vcpkgArguments: "spdlog curl[openssl]"
+          workingDirectory: muffin
         env:
           VCPKG_DEFAULT_TRIPLET: $(build.triplet)
       - task: CMake@1
         displayName: "CMake: Configure/Generate"
         inputs:
           cmakeArgs: "--preset=$(cmake.preset)"
-          workingDirectory: $(Build.SourcesDirectory)
+          workingDirectory: muffin # $(Build.SourcesDirectory)
       - task: CMake@1
         displayName: "CMake: Build"
         inputs:
           cmakeArgs: "--build --preset=$(cmake.preset)"
-          workingDirectory: $(Build.SourcesDirectory)
+          workingDirectory: muffin

@@ -45,7 +45,7 @@ jobs:
       - run:
           name: "Setup Vcpkg"
           command: |
-            rm vcpkg.json
+            rm -f muffin/vcpkg.json
             mkdir -p ${VCPKG_DEFAULT_BINARY_CACHE}
             pushd /tmp
               git clone --branch=2022.06.16.1 --depth=1 https://github.com/microsoft/vcpkg
