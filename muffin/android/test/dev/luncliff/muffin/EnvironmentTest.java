@@ -18,17 +18,27 @@ public class EnvironmentTest {
     @TestFactory
     Collection<DynamicTest> EGL() {
         ArrayList<DynamicTest> tests = new ArrayList<>();
-        tests.add(dynamicTest("KHR", EnvironmentTest::KHR_image_base));
-        if(Environment.HasEGLExtension("EGL_ANDROID_create_native_client_buffer"))
-            tests.add(dynamicTest("ANDROID", EnvironmentTest::ANDROID_create_native_client_buffer));
+        tests.add(dynamicTest("KHR", EnvironmentTest::KHR));
+        if(Environment.HasEGL("EGL_ANDROID_create_native_client_buffer"))
+            tests.add(dynamicTest("ANDROID", EnvironmentTest::ANDROID_Full));
+        else
+            tests.add(dynamicTest("ANDROID", EnvironmentTest::ANDROID_Lite));
         return tests;
     }
 
-    public static void KHR_image_base() {
-        Assertions.assertTrue(Environment.HasEGLExtension("EGL_KHR_image_base"));
+    public static void KHR() {
+        Assertions.assertTrue(Environment.HasEGL("EGL_KHR_image_base"));
+        Assertions.assertTrue(Environment.HasEGL("EGL_KHR_fence_sync"));
+        Assertions.assertTrue(Environment.HasEGL("EGL_KHR_wait_sync"));
     }
-    public static void ANDROID_create_native_client_buffer() {
-        Assertions.assertTrue(Environment.HasEGLExtension("EGL_ANDROID_image_native_buffer"));
-        Assertions.assertTrue(Environment.HasEGLExtension("EGL_KHR_image_base"));
+    public static void ANDROID_Full() {
+        Assertions.assertTrue(Environment.HasEGL("EGL_ANDROID_image_native_buffer"));
+        ANDROID_Lite();
     }
+    public static void ANDROID_Lite() {
+        Assertions.assertTrue(Environment.HasEGL("EGL_ANDROID_presentation_time"));
+        Assertions.assertTrue(Environment.HasEGL("EGL_ANDROID_get_native_client_buffer"));
+        Assertions.assertTrue(Environment.HasEGL("EGL_ANDROID_get_frame_timestamps"));
+    }
+
 }

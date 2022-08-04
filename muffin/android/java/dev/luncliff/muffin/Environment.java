@@ -6,5 +6,5 @@ public class Environment {
         System.loadLibrary("muffin");
     }
 
-    public static native boolean HasEGLExtension(String name);
+    public static native boolean HasEGL(String extension);
 }

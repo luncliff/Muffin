@@ -57,7 +57,7 @@ void store_runtime_exception(JNIEnv* env, const char* message) noexcept;
 
 extern "C" {
 
-JNIEXPORT jboolean Java_dev_luncliff_muffin_Environment_HasEGLExtension(JNIEnv* env, jclass, jstring str) {
+JNIEXPORT jboolean Java_dev_luncliff_muffin_Environment_HasEGL(JNIEnv* env, jclass, jstring str) {
     auto name = make_string(env, str);
     std::vector extensions = get_egl_extensions(eglGetDisplay(EGL_DEFAULT_DISPLAY));
     for (std::string_view ext : extensions)
