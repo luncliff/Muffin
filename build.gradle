@@ -1,22 +1,22 @@
-import java.nio.file.Paths
 
+// https://developer.android.com/studio/build/native-dependencies?hl=en
+plugins {
+    id "com.android.library" // version "7.2.2"
+}
 repositories {
     google()
     mavenCentral()
     maven { url "https://jitpack.io" }
 }
 
+import java.nio.file.Paths
 def vcpkg_root = Paths.get(System.getenv("VCPKG_ROOT")).toAbsolutePath()
 def vcpkg_toolchain_file = Paths.get(vcpkg_root.toString(), "scripts", "buildsystems", "vcpkg.cmake")
 println("Using vcpkg: ${vcpkg_toolchain_file}")
-
 def ndk_root = Paths.get(System.getenv("ANDROID_NDK_HOME")).toAbsolutePath()
 def ndk_toolchain_file = Paths.get(ndk_root.toString(), "build", "cmake", "android.toolchain.cmake")
 println("Using NDK: ${ndk_toolchain_file}")
 
-// https://developer.android.com/studio/build/native-dependencies?hl=en
-
-apply plugin: "com.android.library"
 android {
     compileSdk 32
     compileOptions {
@@ -38,11 +38,11 @@ android {
     buildFeatures {
         buildConfig = true
         prefab = true
-        // prefabPublishing = true
+        prefabPublishing = true
     }
-    // prefab {
-    //     muffin.headers "include"
-    // }
+    prefab {
+        muffin.headers "src"
+    }
 
     defaultConfig {
         minSdkVersion 26
@@ -58,7 +58,7 @@ android {
                 arguments   "-DANDROID_ARM_NEON=ON"
                 arguments   "-DCMAKE_TOOLCHAIN_FILE=${vcpkg_toolchain_file}"
                 arguments   "-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${ndk_toolchain_file}"
-                targets     "muffin"
+                // targets     "muffin"
             }
         }
         // https://github.com/mannodermaus/android-junit5
@@ -67,8 +67,8 @@ android {
     }
     externalNativeBuild {
         cmake {
-            version "3.22.0+"
-            path    "CMakeLists.txt"
+            version "3.21.0+"
+            path file("CMakeLists.txt")
         }
     }
     sourceSets {
@@ -104,7 +104,6 @@ android {
     }
 }
 
-// https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_configurations_graph
 dependencies {
     api "org.jetbrains.kotlin:kotlin-stdlib:1.7.10"
 
