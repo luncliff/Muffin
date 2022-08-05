@@ -5,7 +5,7 @@
 #include <string_view>
 #include <vector>
 
-std::vector<std::string_view> get_egl_extensions(EGLDisplay dispaly) noexcept;
+std::vector<std::string_view> get_egl_extensions(EGLDisplay display) noexcept;
 
 struct egl_android_t final {
     bool blob_cache;
