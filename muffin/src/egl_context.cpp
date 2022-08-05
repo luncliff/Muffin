@@ -2,6 +2,10 @@
 
 #include <spdlog/spdlog.h>
 
+#include <cstring>
+#include <string_view>
+#include <vector>
+
 uint32_t choose_config(EGLDisplay display, EGLConfig &config, ANativeWindow *window) noexcept;
 
 egl_context_t::egl_context_t(EGLDisplay display, EGLConfig config, EGLContext share_context) noexcept

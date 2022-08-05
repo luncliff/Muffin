@@ -4,7 +4,7 @@
 #
 cmake_minimum_required(VERSION 3.21)
 # VCPKG_TARGET_TRIPLET is required
-include(${CMAKE_CURRENT_SOURCE_DIR}/scripts/vcpkg_android.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/vcpkg_android.cmake)
 
 project(muffin LANGUAGES CXX VERSION 1.3.0)
 if(NOT ANDROID)
@@ -51,8 +51,11 @@ list(APPEND headers src/muffin.hpp)
 
 add_library(muffin SHARED
     ${headers} src/muffin.cpp
-    src/egl_context.hpp src/egl_context.cpp src/egl_surface.hpp src/egl_surface.cpp src/egl_jni.cpp
+    src/egl_context.hpp src/egl_context.cpp src/egl_surface.hpp src/egl_surface.cpp
+    src/egl_android.hpp src/egl_android.cpp
+    src/ndk_buffer.hpp src/ndk_buffer.cpp
     src/ndk_camera.hpp src/ndk_camera.cpp  src/ndk_camera_jni.cpp
+    src/image_analyzer.hpp src/image_analyzer.cpp
     src/worker.cpp
 )
 
