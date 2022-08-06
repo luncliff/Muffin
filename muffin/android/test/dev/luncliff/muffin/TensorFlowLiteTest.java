@@ -34,6 +34,7 @@ public class TensorFlowLiteTest {
 
   @Test
   public void checkModels() {
+    Assertions.assertNotNull(assets);
     checkExists("face_detection_short_range.tflite", 229032);
     checkExists("face_landmark.tflite", 1241896);
     checkExists("iris_landmark.tflite", 2640568);
