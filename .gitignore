@@ -6,6 +6,9 @@ cmake-*
 build-*
 gradle/
 gradle*
+jniLibs
+externals
+install
 
 app
 

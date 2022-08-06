@@ -54,9 +54,19 @@ jobs:
                 ./vcpkg install --triplet arm64-android     spdlog curl[openssl]
                 ./vcpkg install --triplet arm-neon-android  spdlog curl[openssl]
                 ./vcpkg install --triplet x64-android       spdlog curl[openssl]
+                ./vcpkg install --triplet x86-android       spdlog curl[openssl]
               popd
             popd
             tree -L 1 ${VCPKG_ROOT}
+      - run:
+          name: "Download/Extract TensorFlowLite 2.9.0(aar)"
+          command: |
+            mkdir -p "externals"
+            wget -q "https://search.maven.org/remotecontent?filepath=org/tensorflow/tensorflow-lite/2.9.0/tensorflow-lite-2.9.0.aar" -O "externals/tensorflow-lite-2.9.0.aar"
+            unzip -o "externals/tensorflow-lite-2.9.0.aar" -d externals/tmp
+            rsync -r ./externals/tmp/headers/ ./jniLibs/include
+            rsync -r ./externals/tmp/jni/ ./jniLibs/lib
+          working_directory: muffin
       - run:
           name: "Gradle: wrapper"
           command: gradle wrapper --info

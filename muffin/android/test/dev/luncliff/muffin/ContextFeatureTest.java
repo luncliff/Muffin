@@ -61,21 +61,4 @@ public class ContextFeatureTest {
       Log.i("ContextFeatureTest", String.format("shared lib: %s", file.getAbsolutePath()));
     }
   }
-
-  @Test
-  public void checkExecutor() {
-    Assertions.assertNotNull(ContextCompat.getMainExecutor(context));
-  }
-
-  @Test
-  public void checkMainLooper() {
-    Looper looper = context.getMainLooper();
-    Assertions.assertNotNull(looper);
-  }
-
-  @Test
-  public void checkAssetManager() {
-    AssetManager assets = context.getAssets();
-    Assertions.assertNotNull(assets);
-  }
 }
