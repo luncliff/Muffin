@@ -33,7 +33,7 @@ public class TensorFlowLiteTest {
   }
 
   @Test
-  public void checkTflite() {
+  public void checkModels() {
     checkExists("face_detection_short_range.tflite", 229032);
     checkExists("face_landmark.tflite", 1241896);
     checkExists("iris_landmark.tflite", 2640568);

@@ -14,6 +14,9 @@ repositories {
     // sonatypeSnapshots()
 }
 
+/**
+ * @brief Set of variables for the build configuration
+ */
 object BuildParams {
     const val projectName = "muffin"
     const val githubUrl = "https://github.com/luncliff/muffin"

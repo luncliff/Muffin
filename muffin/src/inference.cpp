@@ -5,7 +5,8 @@
 
 namespace fs = std::filesystem;
 
-#define expect(expr)
+#define expect(expr) \
+    if ((expr) == false) return;
 #define MODEL_DIR ""
 
 void test_runtime_version() {
