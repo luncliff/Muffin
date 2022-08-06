@@ -120,7 +120,9 @@ jobs:
       - powershell: |
           New-Item -Type Directory -Force -Name "externals"
           Invoke-WebRequest "https://search.maven.org/remotecontent?filepath=org/tensorflow/tensorflow-lite/2.9.0/tensorflow-lite-2.9.0.aar" -OutFile "externals/tensorflow-lite-2.9.0.aar"
-          Expand-Archive -Path "externals/tensorflow-lite-2.9.0.aar" -DestinationPath jniLibs
+          Expand-Archive -Path "externals/tensorflow-lite-2.9.0.aar" -Force -DestinationPath "externals/tmp"
+          rsync -r ./externals/tmp/headers/ ./jniLibs/include
+          rsync -r ./externals/tmp/jni/ ./jniLibs/lib
         displayName: "Download/Extract TensorflowLite 2.9.0(aar)"
       - powershell: New-Item -Type Directory -Force ${env:VCPKG_DEFAULT_BINARY_CACHE}
       - task: Cache@2

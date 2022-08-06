@@ -3,7 +3,6 @@
 # See https://github.com/microsoft/vcpkg/blob/master/docs/examples/vcpkg_android_example_cmake_script/CMakeLists.txt
 #
 cmake_minimum_required(VERSION 3.21)
-# VCPKG_TARGET_TRIPLET is required
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/vcpkg_android.cmake)
 
 project(muffin LANGUAGES CXX VERSION 1.3.0)
@@ -22,8 +21,9 @@ find_package(ZLIB REQUIRED)
 find_package(Vulkan REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 
-# find_path(TFLITE_INCLUDE_DIR NAMES "tensorflow/lite/builtin_ops.h" PATH_SUFFIXES "headers" REQUIRED NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH)
-# find_library(TFLITE_LIBRARY NAMES tensorflow-lite tensorflowlite_jni REQUIRED NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH)
+list(APPEND CMAKE_FIND_ROOT_PATH "${PROJECT_SOURCE_DIR}/jniLibs")
+find_path(TFLITE_INCLUDE_DIR NAMES "tensorflow/lite/builtin_ops.h" REQUIRED NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH)
+find_library(TFLITE_LIBRARY NAMES tensorflowlite_jni tensorflow-lite REQUIRED PATH_SUFFIXES ${ANDROID_ABI} NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH)
 
 check_include_file_cxx("vulkan/vulkan.h" found_vulkan)
 check_include_file_cxx("GLES3/gl3.h" found_gles3)
@@ -74,7 +74,7 @@ PROPERTIES
 
 target_include_directories(muffin
 PRIVATE
-    jniLibs/headers
+    ${TFLITE_INCLUDE_DIR}
     src
 )
 
@@ -97,16 +97,16 @@ PRIVATE
 target_link_libraries(muffin
 PRIVATE
     ${CMAKE_DL_LIBS} ${ANDROID_STL} m android log
-    ${EGL_LIBPATH} ${GLES_LIBPATH} ${NDK_CAMERA_LIBPATH} # ${NDK_MEDIA_LIBPATH}
+    ${EGL_LIBPATH} ${GLES_LIBPATH} ${NDK_CAMERA_LIBPATH} ${NDK_MEDIA_LIBPATH}
     Vulkan::Vulkan
     fmt::fmt-header-only spdlog::spdlog_header_only
-    tensorflowlite_jni
+    ${TFLITE_LIBRARY}
 )
 
-# target_link_options(muffin
-# PRIVATE
-#     # ...
-# )
+target_link_options(muffin
+PRIVATE
+    -Wall
+)
 
 install(TARGETS         muffin
         EXPORT          muffin-config
