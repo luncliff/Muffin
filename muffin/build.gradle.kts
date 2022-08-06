@@ -114,14 +114,14 @@ tasks.withType<Test> {
 }
 
 dependencies {
-    // implementation(fileTree(mapOf("externals" to "aars" to listOf("*.aar"))))
+    // https://developers.google.com/ar/develop/java/quickstart
+    // api("com.google.ar:core:1.32.0")
+    api("com.google.guava:guava:31.1-jre")
+    api("org.jetbrains.kotlin:kotlin-stdlib:1.7.10")
 
     // https://search.maven.org/artifact/org.tensorflow/tensorflow-lite
     // https://www.tensorflow.org/lite/performance/gpu_advanced
     implementation("org.tensorflow:tensorflow-lite-gpu:2.8.0")
-
-    // https://developers.google.com/ar/develop/java/quickstart
-    // api("com.google.ar:core:1.32.0")
 
     api("androidx.core:core:1.8.0")
     api("androidx.camera:camera-core:1.1.0")
