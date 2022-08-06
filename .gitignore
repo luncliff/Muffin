@@ -10,6 +10,8 @@ jniLibs
 externals
 install
 
+app
+
 # Created by https://www.gitignore.io/api/c++,java,cmake,gradle,android,androidstudio,visualstudiocode
 # Edit at https://www.gitignore.io/?templates=c++,java,cmake,gradle,android,androidstudio,visualstudiocode
 

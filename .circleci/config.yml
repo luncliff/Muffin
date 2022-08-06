@@ -45,7 +45,7 @@ jobs:
       - run:
           name: "Setup Vcpkg"
           command: |
-            rm vcpkg.json
+            rm -f muffin/vcpkg.json
             mkdir -p ${VCPKG_DEFAULT_BINARY_CACHE}
             pushd /tmp
               git clone --branch=2022.06.16.1 --depth=1 https://github.com/microsoft/vcpkg
@@ -63,6 +63,7 @@ jobs:
             mkdir -p "externals"
             wget -q "https://search.maven.org/remotecontent?filepath=org/tensorflow/tensorflow-lite/2.9.0/tensorflow-lite-2.9.0.aar" -O "externals/tensorflow-lite-2.9.0.aar"
             unzip -o "externals/tensorflow-lite-2.9.0.aar" -d jniLibs
+          working_directory: muffin
       - run:
           name: "Gradle: wrapper"
           command: gradle wrapper --info
