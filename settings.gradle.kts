@@ -12,6 +12,6 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "Muffin"
+// rootProject.name = "Muffin"
 include(":muffin")
 include(":sample")
