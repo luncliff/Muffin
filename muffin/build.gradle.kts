@@ -68,7 +68,7 @@ android {
         }
         // https://github.com/mannodermaus/android-junit5
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        testInstrumentationRunnerArgument("runnerBuilder", "de.mannodermaus.junit5.AndroidJUnit5Builder")
+        testInstrumentationRunnerArguments["runnerBuilder"] = "de.mannodermaus.junit5.AndroidJUnit5Builder"
     }
     externalNativeBuild {
         cmake {
@@ -81,6 +81,7 @@ android {
         getByName("main"){
             java.srcDir("android/java")
             manifest.srcFile("android/AndroidManifest.xml")
+            assets.srcDir("android/assets")
         }
         getByName("androidTest"){
             java.srcDir("android/test")
@@ -89,8 +90,12 @@ android {
     }
 
     packagingOptions {
-        // pickFirst("jniLibs/**/*.so")
-        exclude("META-INF/LICENSE*") // JUnit 5 will bundle in files
+        // jniLibs {
+        //     pickFirsts += "jniLibs/**/*.so"
+        // }
+        resources {
+            excludes += "META-INF/LICENSE*" // JUnit 5 will bundle in files
+        }
     }
 
     testOptions {
@@ -126,7 +131,7 @@ dependencies {
     // https://www.tensorflow.org/lite/performance/gpu_advanced
     implementation("org.tensorflow:tensorflow-lite-gpu:2.8.0")
 
-    api("androidx.core:core:1.8.0")
+    api("androidx.core:core-ktx:1.8.0")
     api("androidx.camera:camera-core:1.1.0")
     api("androidx.camera:camera-camera2:1.1.0")
     api("androidx.camera:camera-lifecycle:1.1.0")
