@@ -9,13 +9,15 @@ orbs:
 jobs:
   build:
     docker:
-      - image: cimg/android:2022.03-ndk
+      - image: cimg/android:2022.07.1-ndk
     resource_class: medium
     # https://circleci.com/docs/2.0/env-vars
+    # https://circleci.com/docs/language-android#handling-out-of-memory-errors
     environment:
       VCPKG_ROOT: /tmp/vcpkg
       VCPKG_FEATURE_FLAGS: "registries,binarycaching"
       VCPKG_DEFAULT_BINARY_CACHE: /tmp/vcpkg-cache
+      # GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m"'
     steps:
       - checkout
       - android/accept-licenses
