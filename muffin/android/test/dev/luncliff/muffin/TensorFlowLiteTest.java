@@ -33,11 +33,18 @@ public class TensorFlowLiteTest {
   }
 
   @Test
-  public void checkModels() {
+  public void checkFaceModels() {
     Assertions.assertNotNull(assets);
     checkExists("face_detection_short_range.tflite", 229032);
     checkExists("face_landmark.tflite", 1241896);
     checkExists("iris_landmark.tflite", 2640568);
+  }
+
+  @Test
+  public void checkSegmentationModels() {
+    Assertions.assertNotNull(assets);
+    checkExists("hair_segmentation.tflite", 780588);
+    checkExists("selfie_segmentation.tflite", 249024);
     checkExists("selfie_segmentation_landscape.tflite", 249792);
   }
 
