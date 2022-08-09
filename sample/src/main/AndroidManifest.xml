@@ -3,6 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="dev.luncliff.sample">
 
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera2.full"/>
+
     <application
         android:name=".MuffinApp"
         android:allowBackup="false"

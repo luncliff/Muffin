@@ -1,6 +1,7 @@
 package dev.luncliff.sample;
 
 import android.app.Application;
+import android.hardware.camera2.CameraManager;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;

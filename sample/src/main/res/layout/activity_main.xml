@@ -10,6 +10,6 @@
         android:id="@+id/sample_surface"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#987476"/>
+        />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
