@@ -147,7 +147,7 @@ class event_t final {
 };
 
 class repeat_timer_t final {
-    uint64_t handle;
+    int64_t handle;
 
    public:
     repeat_timer_t() noexcept(false);
@@ -159,4 +159,3 @@ class repeat_timer_t final {
 
     uint64_t fd() const noexcept;
 };
- 

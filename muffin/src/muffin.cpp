@@ -47,7 +47,7 @@ void store_runtime_exception(JNIEnv* env, const char* message) noexcept {
     jclass t = env->FindClass(name);
     if (t == nullptr) return spdlog::error("{:s}: {:s}", "No Java class", name);
     env->ThrowNew(t, message);
-}
+} 
 
 static_assert(sizeof(void*) <= sizeof(jlong), "`jlong` must be able to contain `void*` pointer");
 
