@@ -150,7 +150,7 @@ class repeat_timer_t final {
     int64_t handle;
 
    public:
-    repeat_timer_t() noexcept(false);
+    explicit repeat_timer_t(const timespec& interval) noexcept(false);
     ~repeat_timer_t() noexcept;
     repeat_timer_t(const repeat_timer_t&) = delete;
     repeat_timer_t(repeat_timer_t&&) = delete;

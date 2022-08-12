@@ -11,6 +11,7 @@
 #include <sys/eventfd.h>
 #include <sys/timerfd.h>
 #include <unistd.h>
+#include <chrono>
 
 extern "C" jint JNI_OnLoad(JavaVM* vm, void*) {
     constexpr auto version = JNI_VERSION_1_6;
@@ -47,7 +48,7 @@ void store_runtime_exception(JNIEnv* env, const char* message) noexcept {
     jclass t = env->FindClass(name);
     if (t == nullptr) return spdlog::error("{:s}: {:s}", "No Java class", name);
     env->ThrowNew(t, message);
-} 
+}
 
 static_assert(sizeof(void*) <= sizeof(jlong), "`jlong` must be able to contain `void*` pointer");
 
@@ -166,15 +167,17 @@ void event_t::reset() noexcept(false) {
     this->state = static_cast<uint64_t>(fd);
 }
 
-repeat_timer_t::repeat_timer_t() noexcept(false) : handle{timerfd_create(CLOCK_REALTIME, TFD_NONBLOCK | TFD_CLOEXEC)} {
+repeat_timer_t::repeat_timer_t(const timespec& interval) noexcept(false)
+    : handle{timerfd_create(CLOCK_REALTIME, TFD_NONBLOCK | TFD_CLOEXEC)} {
     if (handle == -1)
         throw std::system_error{errno, std::system_category(),
                                 "timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK|TFD_CLOEXEC)"};
-    //    itimerspec spec{};
-    //    if(timerfd_settime(handle, TFD_TIMER_ABSTIME, &spec, nullptr) == -1){
-    //        close(handle)
-    //        throw std::system_error{errno, std::system_category(), "timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK|TFD_CLOEXEC)"};
-    //    }
+    itimerspec spec{};
+    spec.it_interval = interval;
+    if (timerfd_settime(handle, TFD_TIMER_ABSTIME, &spec, nullptr) == -1) {
+        close(handle);
+        throw std::system_error{errno, std::system_category(), "timerfd_settime(TFD_TIMER_ABSTIME)"};
+    }
 }
 
 repeat_timer_t::~repeat_timer_t() noexcept { close(handle); }
@@ -218,3 +221,19 @@ auto wait_in(epoll_owner_t& ep, event_t& efd) {
     };
     return awaiter_t{ep, efd};
 }
+
+extern "C" {
+JNIEXPORT jint JNICALL Java_dev_luncliff_muffin_NativeTimerTest_countWithInterval(  //
+    JNIEnv* env, jobject, jint d, jint i) {
+    using namespace std::chrono;
+    // milliseconds _duration{d};
+    // milliseconds _interval{i};
+    timespec interval{};
+    interval.tv_sec = duration_cast<seconds>(milliseconds{i}).count();
+    interval.tv_nsec = duration_cast<nanoseconds>(milliseconds{i}).count() - (interval.tv_sec * 1'000'000'000);
+    repeat_timer_t timer{interval};
+    epoll_owner_t ep{};
+    // return static_cast<int>(_duration / interval);
+    return 0;
+}
+}  // extern "C"
