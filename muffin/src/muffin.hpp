@@ -146,16 +146,22 @@ class event_t final {
     void reset() noexcept(false);
 };
 
+/**
+ * @see https://man7.org/linux/man-pages/man2/timerfd_create.2.html
+ */
 class repeat_timer_t final {
-    int64_t handle;
+    int handle;
 
    public:
-    explicit repeat_timer_t(const timespec& interval) noexcept(false);
+    explicit repeat_timer_t() noexcept(false);
     ~repeat_timer_t() noexcept;
     repeat_timer_t(const repeat_timer_t&) = delete;
     repeat_timer_t(repeat_timer_t&&) = delete;
     repeat_timer_t& operator=(const repeat_timer_t&) = delete;
     repeat_timer_t& operator=(repeat_timer_t&&) = delete;
 
-    uint64_t fd() const noexcept;
+    void start(const timespec& interval) noexcept(false);
+    void stop() noexcept(false);
+
+    int fd() const noexcept;
 };

@@ -10,7 +10,9 @@
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
 #include <sys/timerfd.h>
+#include <time.h>  // todo: acquire resolution https://man7.org/linux/man-pages/man2/clock_getres.2.html
 #include <unistd.h>
+
 #include <chrono>
 
 extern "C" jint JNI_OnLoad(JavaVM* vm, void*) {
@@ -167,22 +169,30 @@ void event_t::reset() noexcept(false) {
     this->state = static_cast<uint64_t>(fd);
 }
 
-repeat_timer_t::repeat_timer_t(const timespec& interval) noexcept(false)
-    : handle{timerfd_create(CLOCK_REALTIME, TFD_NONBLOCK | TFD_CLOEXEC)} {
+repeat_timer_t::repeat_timer_t() noexcept(false) : handle{timerfd_create(CLOCK_REALTIME, TFD_NONBLOCK | TFD_CLOEXEC)} {
     if (handle == -1)
         throw std::system_error{errno, std::system_category(),
                                 "timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK|TFD_CLOEXEC)"};
-    itimerspec spec{};
-    spec.it_interval = interval;
-    if (timerfd_settime(handle, TFD_TIMER_ABSTIME, &spec, nullptr) == -1) {
-        close(handle);
-        throw std::system_error{errno, std::system_category(), "timerfd_settime(TFD_TIMER_ABSTIME)"};
-    }
 }
 
 repeat_timer_t::~repeat_timer_t() noexcept { close(handle); }
 
-uint64_t repeat_timer_t::fd() const noexcept { return handle; }
+void repeat_timer_t::start(const timespec& interval) noexcept(false) {
+    itimerspec spec{};
+    clock_gettime(CLOCK_REALTIME, &spec.it_value);  // from current time point,
+    spec.it_interval = interval;                    //  repeat with the interval
+    if (timerfd_settime(handle, TFD_TIMER_ABSTIME, &spec, nullptr) == -1)
+        throw std::system_error{errno, std::system_category(), "timerfd_settime(TFD_TIMER_ABSTIME)"};
+}
+
+void repeat_timer_t::stop() noexcept(false) {
+    itimerspec spec{};
+    // using zero for `spec.it_value` will stop the timer
+    if (timerfd_settime(handle, TFD_TIMER_ABSTIME, &spec, nullptr) == -1)
+        throw std::system_error{errno, std::system_category(), "timerfd_settime(TFD_TIMER_ABSTIME)"};
+}
+
+int repeat_timer_t::fd() const noexcept { return handle; }
 
 /**
  * @brief Bind the given `event`(`eventfd`) to `epoll_owner_t`(Epoll)
@@ -226,14 +236,32 @@ extern "C" {
 JNIEXPORT jint JNICALL Java_dev_luncliff_muffin_NativeTimerTest_countWithInterval(  //
     JNIEnv* env, jobject, jint d, jint i) {
     using namespace std::chrono;
-    // milliseconds _duration{d};
-    // milliseconds _interval{i};
-    timespec interval{};
-    interval.tv_sec = duration_cast<seconds>(milliseconds{i}).count();
-    interval.tv_nsec = duration_cast<nanoseconds>(milliseconds{i}).count() - (interval.tv_sec * 1'000'000'000);
-    repeat_timer_t timer{interval};
-    epoll_owner_t ep{};
-    // return static_cast<int>(_duration / interval);
-    return 0;
+    try {
+        epoll_owner_t ep{};
+        epoll_event events[1]{};
+        events[0].events = EPOLLIN;
+        events[0].data.ptr = nullptr;
+
+        repeat_timer_t timer{};
+        ep.try_add(timer.fd(), events[0]);
+
+        timespec interval{};
+        interval.tv_sec = duration_cast<seconds>(milliseconds{i}).count();
+        interval.tv_nsec = duration_cast<nanoseconds>(milliseconds{i}).count() - (interval.tv_sec * 1'000'000'000);
+        timer.start(interval);
+
+        uint64_t count = 0;
+        while (count == 0)  //
+            count = ep.wait(milliseconds{d}.count(), events, 1);
+
+        if (auto rsz = read(timer.fd(), &count, sizeof(uint64_t)); rsz == -1)
+            spdlog::error("{}: {} {}", __func__, "read", errno);
+
+        timer.stop();
+        return static_cast<jint>(count);
+    } catch (const std::exception& ex) {
+        spdlog::error("{}: {}", __func__, ex.what());
+        return 0;
+    }
 }
 }  // extern "C"
