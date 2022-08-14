@@ -1,17 +1,22 @@
 package dev.luncliff.muffin;
 
-import org.junit.Before;
+import android.util.Log;
+
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalTime;
 
 public class NativeTimerTest {
-    @Before
-    public void loadLibrary() {
-        System.loadLibrary("muffin");
+    @BeforeAll
+    public static void loadLibrary() {
+        try {
+            System.loadLibrary("tensorflowlite_jni");
+            System.loadLibrary("muffin");
+        } catch (UnsatisfiedLinkError ex) {
+            Assertions.fail(ex.getMessage());
+        }
     }
 
     native int countWithInterval(int duration, int interval);
@@ -20,7 +25,7 @@ public class NativeTimerTest {
     public void testRepeat1s() {
         LocalTime start = java.time.LocalTime.now();
         int count = countWithInterval(2000, 900);
-        Assertions.assertEquals(2, count);
+        Assertions.assertEquals(2 + 1, count);
         LocalTime end = java.time.LocalTime.now();
         int elapsed = end.getSecond() - start.getSecond();
         Assertions.assertTrue(elapsed >= 2);
@@ -30,7 +35,7 @@ public class NativeTimerTest {
     public void testRepeat3s() {
         LocalTime start = java.time.LocalTime.now();
         int count = countWithInterval(3000, 400);
-        Assertions.assertEquals(7, count);
+        Assertions.assertEquals(7 + 1, count);
         LocalTime end = java.time.LocalTime.now();
         int elapsed = end.getSecond() - start.getSecond();
         Assertions.assertTrue(elapsed >= 3);

@@ -178,7 +178,7 @@ repeat_timer_t::repeat_timer_t() noexcept(false) : handle{timerfd_create(CLOCK_R
 repeat_timer_t::~repeat_timer_t() noexcept { close(handle); }
 
 void repeat_timer_t::start(const timespec& interval) noexcept(false) {
-    itimerspec spec{};
+    itimerspec spec{}; 
     clock_gettime(CLOCK_REALTIME, &spec.it_value);  // from current time point,
     spec.it_interval = interval;                    //  repeat with the interval
     if (timerfd_settime(handle, TFD_TIMER_ABSTIME, &spec, nullptr) == -1)
@@ -233,7 +233,7 @@ auto wait_in(epoll_owner_t& ep, event_t& efd) {
 }
 
 extern "C" {
-JNIEXPORT jint JNICALL Java_dev_luncliff_muffin_NativeTimerTest_countWithInterval(  //
+JNIEXPORT jint Java_dev_luncliff_muffin_NativeTimerTest_countWithInterval(  //
     JNIEnv* env, jobject, jint d, jint i) {
     using namespace std::chrono;
     try {
@@ -246,14 +246,13 @@ JNIEXPORT jint JNICALL Java_dev_luncliff_muffin_NativeTimerTest_countWithInterva
         ep.try_add(timer.fd(), events[0]);
 
         timespec interval{};
-        interval.tv_sec = duration_cast<seconds>(milliseconds{i}).count();
-        interval.tv_nsec = duration_cast<nanoseconds>(milliseconds{i}).count() - (interval.tv_sec * 1'000'000'000);
+        interval.tv_sec = i / 1'000; // ms -> sec
+        interval.tv_nsec = i * 1'000'000 - (interval.tv_sec * 1'000'000'000);
         timer.start(interval);
 
-        uint64_t count = 0;
-        while (count == 0)  //
-            count = ep.wait(milliseconds{d}.count(), events, 1);
+        std::this_thread::sleep_for(milliseconds{d});
 
+        uint64_t count = ep.wait(0, events, 1);
         if (auto rsz = read(timer.fd(), &count, sizeof(uint64_t)); rsz == -1)
             spdlog::error("{}: {} {}", __func__, "read", errno);
 
