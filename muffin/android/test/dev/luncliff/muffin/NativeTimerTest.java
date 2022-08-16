@@ -1,7 +1,5 @@
 package dev.luncliff.muffin;
 
-import android.util.Log;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -10,13 +8,8 @@ import java.time.LocalTime;
 
 public class NativeTimerTest {
     @BeforeAll
-    public static void loadLibrary() {
-        try {
-            System.loadLibrary("tensorflowlite_jni");
-            System.loadLibrary("muffin");
-        } catch (UnsatisfiedLinkError ex) {
-            Assertions.fail(ex.getMessage());
-        }
+    public static void setupAll() {
+        Environment.Init();
     }
 
     native int countWithInterval(int duration, int interval);

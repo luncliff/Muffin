@@ -9,11 +9,6 @@ import android.opengl.EGLSurface;
 import androidx.annotation.NonNull;
 
 public class EGLContextOwner implements AutoCloseable {
-    static {
-        System.loadLibrary("c++_shared");
-        System.loadLibrary("muffin");
-    }
-
     long display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY).getNativeHandle();
     long config;
     long context;
@@ -31,13 +26,15 @@ public class EGLContextOwner implements AutoCloseable {
 
     private static native int present(long display, long context);
 
-    EGLContextOwner(EGLDisplay display, EGLConfig config, EGLContext shared) throws RuntimeException {
+    EGLContextOwner(EGLDisplay display, EGLConfig config, EGLContext shared) throws RuntimeException, UnsatisfiedLinkError {
+        Environment.Init();
         this.display = display.getNativeHandle();
         this.config = config.getNativeHandle();
         this.context = create1(this.display, this.config, shared.getNativeHandle());
     }
 
-    EGLContextOwner(EGLSurfaceOwner surface) throws RuntimeException {
+    EGLContextOwner(EGLSurfaceOwner surface) throws RuntimeException, UnsatisfiedLinkError {
+        Environment.Init();
         this.display = surface.display;
         this.config = surface.config;
         this.context = create1(this.display, this.config, 0); // use EGL14.EGL_NO_CONTEXT

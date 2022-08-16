@@ -20,9 +20,9 @@ public class EnvironmentTest {
         ArrayList<DynamicTest> tests = new ArrayList<>();
         tests.add(dynamicTest("KHR", EnvironmentTest::KHR));
         if(Environment.HasEGL("EGL_ANDROID_create_native_client_buffer"))
-            tests.add(dynamicTest("ANDROID", EnvironmentTest::ANDROID_Full));
+            tests.add(dynamicTest("ANDROID_Full", EnvironmentTest::ANDROID_Full));
         else
-            tests.add(dynamicTest("ANDROID", EnvironmentTest::ANDROID_Lite));
+            tests.add(dynamicTest("ANDROID_Lite", EnvironmentTest::ANDROID_Lite));
         return tests;
     }
 

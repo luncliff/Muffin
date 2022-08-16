@@ -90,9 +90,10 @@ android {
     }
 
     packagingOptions {
-        // jniLibs {
-        //     pickFirsts += "jniLibs/**/*.so"
-        // }
+        jniLibs {
+            // use binaries in the other AAR
+            excludes += "lib/**/libtensorflowlite_jni.so"
+        }
         resources {
             excludes += "META-INF/LICENSE*" // JUnit 5 will bundle in files
         }
@@ -129,7 +130,9 @@ dependencies {
 
     // https://search.maven.org/artifact/org.tensorflow/tensorflow-lite
     // https://www.tensorflow.org/lite/performance/gpu_advanced
-    implementation("org.tensorflow:tensorflow-lite-gpu:2.8.0")
+    // api("org.tensorflow:tensorflow-lite:2.9.0")
+    implementation("org.tensorflow:tensorflow-lite-gpu:2.9.0")
+    androidTestImplementation("org.tensorflow:tensorflow-lite:2.9.0")
 
     api("androidx.core:core-ktx:1.8.0")
     api("androidx.camera:camera-core:1.1.0")

@@ -46,7 +46,7 @@ public class EGLSurfaceTest implements ImageReader.OnImageAvailableListener {
       final int format = image.getFormat();
       Assertions.assertNotNull(image.getHardwareBuffer());
       final int count = counter.incrementAndGet(); // load(acquire)
-      Log.d("RendererSurfaceTest", String.format("format %x, count %d", format, count));
+      Log.d("EGLSurfaceTest", String.format("format %x, count %d", format, count));
     } catch (UnsupportedOperationException ex) {
       Assertions.fail(ex.getMessage());
     }

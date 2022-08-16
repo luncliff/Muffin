@@ -56,7 +56,6 @@ public class SaveImageTest {
     public void saveToFile() {
         DeviceHandle camera = getAnyCamera();
         Assertions.assertNotNull(camera);
-
         // camera image reader
         try (ImageReader reader = ImageReader.newInstance(640, 480, ImageFormat.YUV_420_888, 2)) {
             // start capture operation

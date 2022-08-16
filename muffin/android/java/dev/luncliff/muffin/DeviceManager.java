@@ -2,8 +2,7 @@ package dev.luncliff.muffin;
 
 public class DeviceManager {
     static {
-        System.loadLibrary("c++_shared");
-        System.loadLibrary("muffin");
+        Environment.Init();
     }
 
     private static DeviceHandle[] devices = null;

@@ -8,8 +8,9 @@ import androidx.test.rule.GrantPermissionRule;
 
 import org.junit.Rule;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.tensorflow.lite.TensorFlowLite;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,6 +21,11 @@ public class TensorFlowLiteTest {
 
   Context context = ApplicationProvider.getApplicationContext();
   AssetManager assets = context.getAssets();
+
+  @BeforeAll
+  public static void setupAll(){
+    TensorFlowLite.init();
+  }
 
   void checkExists(String name, int size) {
     try (InputStream stream = assets.open(name)) {
