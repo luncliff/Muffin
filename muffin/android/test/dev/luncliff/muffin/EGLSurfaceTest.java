@@ -47,7 +47,7 @@ public class EGLSurfaceTest implements ImageReader.OnImageAvailableListener {
       if (android.os.Build.VERSION.SDK_INT >= 28)
         Assertions.assertNotNull(image.getHardwareBuffer());
       final int count = counter.incrementAndGet(); // load(acquire)
-      Log.d("RendererSurfaceTest", String.format("format %x, count %d", format, count));
+      Log.d("EGLSurfaceTest", String.format("format %x, count %d", format, count));
     } catch (UnsupportedOperationException ex) {
       Assertions.fail(ex.getMessage());
     }

@@ -6,11 +6,6 @@ import android.view.Surface;
 import androidx.annotation.NonNull;
 
 public class EGLSurfaceOwner implements AutoCloseable {
-    static {
-        System.loadLibrary("c++_shared");
-        System.loadLibrary("muffin");
-    }
-
     final long display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY).getNativeHandle();
     final long config;
     final long surface;
@@ -23,12 +18,14 @@ public class EGLSurfaceOwner implements AutoCloseable {
 
     private static native long query(long display, long surface);
 
-    public EGLSurfaceOwner(Surface window) throws RuntimeException {
+    public EGLSurfaceOwner(Surface window) throws RuntimeException, UnsatisfiedLinkError {
+        Environment.Init();
         surface = create1(display, window); // throw in native code
         config = query(display, surface);
     }
 
-    public EGLSurfaceOwner(int width, int height) throws RuntimeException {
+    public EGLSurfaceOwner(int width, int height) throws RuntimeException, UnsatisfiedLinkError {
+        Environment.Init();
         surface = create2(display, width, height); // throw in native code
         config = query(display, surface);
     }
