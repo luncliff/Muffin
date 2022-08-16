@@ -61,6 +61,7 @@ add_library(muffin SHARED
     src/egl_android.hpp src/egl_android.cpp
     src/ndk_buffer.hpp src/ndk_buffer.cpp
     src/ndk_camera.hpp src/ndk_camera.cpp  src/ndk_camera_jni.cpp
+    src/ndk_sensor.hpp src/ndk_sensor.cpp
     src/worker.cpp
 )
 
