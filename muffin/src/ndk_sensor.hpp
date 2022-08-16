@@ -21,6 +21,8 @@ class ndk_sensor_poll_t final {
     ndk_sensor_poll_t& operator=(const ndk_sensor_poll_t&) = delete;
     ndk_sensor_poll_t& operator=(ndk_sensor_poll_t&&) = delete;
 
+    void poll(ASensorEvent* events, size_t count) noexcept(false);
+
     /**
      * @brief Create sensor event queue with the looper info
      */
@@ -38,4 +40,7 @@ class ndk_sensor_poll_t final {
      * @see enable
      */
     void disable() noexcept(false);
+
+   private:
+    void replace(ALooper* looper) noexcept;
 };

@@ -1,12 +1,15 @@
 package dev.luncliff.muffin;
 
+import android.Manifest;
 import android.content.Context;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 
 import androidx.test.core.app.ApplicationProvider;
+import androidx.test.rule.GrantPermissionRule;
 
+import org.junit.Rule;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -14,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class SensorThreadTest {
+    // @Rule public GrantPermissionRule permissions = GrantPermissionRule.grant(Manifest.permission.HIGH_SAMPLING_RATE_SENSORS);
     HandlerThread thread0 = new HandlerThread("sensor-test-thread");
     Looper looper = null;
     Handler handler = null;
@@ -49,9 +53,8 @@ public class SensorThreadTest {
         try {
             Assertions.assertTrue(handler.post(() -> {
                 test0(name, looper);
-                name.notify();
             }));
-            name.wait();
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             Assertions.fail(e.getMessage());
         }
