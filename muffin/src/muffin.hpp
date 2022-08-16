@@ -70,7 +70,7 @@ class epoll_owner_t final {
     void remove(uint64_t fd);
 
     /**
-     * @brief fetch all event_ts for the given kqeueue descriptor
+     * @brief fetch all events for the given kqeueue descriptor
      * @param wait_ms millisecond to wait
      * @param list
      * @return ptrdiff_t
@@ -83,7 +83,7 @@ class epoll_owner_t final {
 
    public:
     /**
-     * @brief return temporary awaitable object for given event_t
+     * @brief return temporary awaitable object for given event
      * @param req input for `change` operation
      * @see change
      *
@@ -94,7 +94,7 @@ class epoll_owner_t final {
      * ```cpp
      * auto edge_in_async(epoll_owner_t& ep, int64_t fd) -> frame_t {
      *     epoll_event_t req{};
-     *     req.event_ts = EPOLLET | EPOLLIN | EPOLLONESHOT;
+     *     req.events = EPOLLET | EPOLLIN | EPOLLONESHOT;
      *     req.data.ptr = nullptr;
      *     co_await ep.submit(fd, req);
      * }
@@ -120,7 +120,7 @@ class epoll_owner_t final {
 };
 
 /**
- * @brief RAII + stateful `event_tfd`
+ * @brief RAII + stateful `eventfd`
  * @see https://github.com/grpc/grpc/blob/master/src/core/lib/iomgr/is_epollexclusive_available.cc
  * @ingroup Linux
  * 
@@ -129,16 +129,16 @@ class epoll_owner_t final {
  * 
  * Its object can be `co_await`ed multiple times
  */
-class event_t final {
+class event_file_t final {
     uint64_t state;
 
    public:
-    event_t() noexcept(false);
-    ~event_t() noexcept;
-    event_t(const event_t&) = delete;
-    event_t(event_t&&) = delete;
-    event_t& operator=(const event_t&) = delete;
-    event_t& operator=(event_t&&) = delete;
+    event_file_t() noexcept(false);
+    ~event_file_t() noexcept;
+    event_file_t(const event_file_t&) = delete;
+    event_file_t(event_file_t&&) = delete;
+    event_file_t& operator=(const event_file_t&) = delete;
+    event_file_t& operator=(event_file_t&&) = delete;
 
     uint64_t fd() const noexcept;
     bool is_set() const noexcept;

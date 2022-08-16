@@ -135,22 +135,22 @@ void consume_event(int64_t efd) noexcept(false) {
     if (read(efd, &efd, sizeof(efd)) == -1) throw std::system_error{errno, std::system_category(), "read"};
 }
 
-event_t::event_t() noexcept(false) : state{} {
+event_file_t::event_file_t() noexcept(false) : state{} {
     const auto fd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
     if (fd == -1) throw std::system_error{errno, std::system_category(), "eventfd"};
 
     this->state = fd;  // start with unsignaled state
 }
-event_t::~event_t() noexcept {
+event_file_t::~event_file_t() noexcept {
     // if already closed, fd == 0
     if (auto fd = get_eventfd(state)) close(fd);
 }
 
-uint64_t event_t::fd() const noexcept { return get_eventfd(state); }
+uint64_t event_file_t::fd() const noexcept { return get_eventfd(state); }
 
-bool event_t::is_set() const noexcept { return is_signaled(state); }
+bool event_file_t::is_set() const noexcept { return is_signaled(state); }
 
-void event_t::set() noexcept(false) {
+void event_file_t::set() noexcept(false) {
     // already signaled. nothing to do...
     if (is_signaled(state))
         // !!! under the race condition, this check is not safe !!!
@@ -161,7 +161,7 @@ void event_t::set() noexcept(false) {
     state = emask | static_cast<uint64_t>(fd);  //  it's signaled state from now
 }
 
-void event_t::reset() noexcept(false) {
+void event_file_t::reset() noexcept(false) {
     const auto fd = get_eventfd(state);
     // if already signaled. nothing to do...
     if (is_signaled(state)) consume_event(fd);
@@ -203,16 +203,16 @@ int repeat_timer_t::fd() const noexcept { return handle; }
  * @return awaitable struct for the binding
  * @ingroup Linux
  */
-auto wait_in(epoll_owner_t& ep, event_t& efd) {
+auto wait_in(epoll_owner_t& ep, event_file_t& efd) {
     class awaiter_t : epoll_event {
         epoll_owner_t& ep;
-        event_t& efd;
+        event_file_t& efd;
 
        public:
         /**
          * @brief Prepares one-time registration
          */
-        awaiter_t(epoll_owner_t& _ep, event_t& _efd) noexcept : epoll_event{}, ep{_ep}, efd{_efd} {
+        awaiter_t(epoll_owner_t& _ep, event_file_t& _efd) noexcept : epoll_event{}, ep{_ep}, efd{_efd} {
             this->events = EPOLLET | EPOLLIN | EPOLLONESHOT;
         }
 
