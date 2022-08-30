@@ -43,6 +43,30 @@ uint16_t get_facing(ACameraMetadata* metadata) noexcept {
     }
 }
 
+auto get_preferred_size(ACameraMetadata* metadata) noexcept {
+    ACameraMetadata_const_entry entry{};
+    ACameraMetadata_getConstEntry(metadata, ACAMERA_SCALER_AVAILABLE_STREAM_CONFIGURATIONS, &entry);
+    int width = 1920;
+    int height = 1080;
+    for (int i = 0; i < entry.count; ++i) {
+        auto flow = entry.data.i32[i + 3];
+        if (flow != ACAMERA_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT) continue;
+        auto format = entry.data.i32[i + 0];
+        switch (format) {
+            case AIMAGE_FORMAT_PRIVATE:
+            case AIMAGE_FORMAT_YUV_420_888:
+                break;
+            default:
+                continue;
+        }
+        if (auto w = entry.data.i32[i + 1]; w >= width) {
+            width = w;
+            height = entry.data.i32[i + 2];
+        }
+    }
+    return std::make_tuple(width, height);
+}
+
 ndk_camera_session_t* cast_device_handle(JNIEnv* env, jobject self) {
     jlong ptr = 0;
     get_field(env, env->GetObjectClass(self), self, "ptr", ptr);
@@ -92,6 +116,24 @@ int Java_dev_luncliff_muffin_DeviceHandle_facing(JNIEnv* env, jobject self) noex
     ACameraMetadata* metadata = camera_manager->get_metadata(ptr->device);
     if (metadata == nullptr) return ACAMERA_LENS_FACING_EXTERNAL;
     return get_facing(metadata);
+}
+
+JNIEXPORT
+int Java_dev_luncliff_muffin_DeviceHandle_maxWidth(JNIEnv* env, jobject self) noexcept {
+    ndk_camera_session_t* ptr = cast_device_handle(env, self);
+    ACameraMetadata* metadata = camera_manager->get_metadata(ptr->device);
+    if (metadata == nullptr) return 0;
+    auto [w, _] = get_preferred_size(metadata);
+    return w;
+}
+
+JNIEXPORT
+int Java_dev_luncliff_muffin_DeviceHandle_maxHeight(JNIEnv* env, jobject self) noexcept {
+    ndk_camera_session_t* ptr = cast_device_handle(env, self);
+    ACameraMetadata* metadata = camera_manager->get_metadata(ptr->device);
+    if (metadata == nullptr) return 0;
+    auto [_, h] = get_preferred_size(metadata);
+    return h;
 }
 
 JNIEXPORT
@@ -151,7 +193,7 @@ void Java_dev_luncliff_muffin_DeviceHandle_startRepeat(JNIEnv* env, jobject self
         reinterpret_cast<ACameraCaptureSession_captureCallback_sequenceEnd>(context_on_capture_sequence_complete);
 
     try {
-        if (auto status = camera_manager->start_repeat(*ptr, window.get(), on_state_changed, on_capture_event);
+        if (auto status = camera_manager->start_repeat(*ptr, on_state_changed, on_capture_event, window.get());
             status != ACAMERA_OK)
             throw std::system_error(status, get_ndk_camera_errors(), "start_repeat");
     } catch (const std::exception& ex) {
@@ -203,7 +245,7 @@ void Java_dev_luncliff_muffin_DeviceHandle_startCapture(JNIEnv* env, jobject sel
         reinterpret_cast<ACameraCaptureSession_captureCallback_sequenceEnd>(context_on_capture_sequence_complete);
 
     try {
-        if (auto status = camera_manager->start_capture(*ptr, window.get(), on_state_changed, on_capture_event);
+        if (auto status = camera_manager->start_capture(*ptr, on_state_changed, on_capture_event, window.get());
             status != ACAMERA_OK)
             throw std::system_error(status, get_ndk_camera_errors(), "start_capture");
     } catch (const std::exception& ex) {

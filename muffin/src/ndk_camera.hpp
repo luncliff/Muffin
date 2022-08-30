@@ -68,12 +68,14 @@ class ndk_camera_manager_t final {
     /// @note The function doesn't free metadata
     void close_device(ndk_camera_session_t& info) noexcept;
 
+    /// @see https://developer.android.com/ndk/reference/group/camera#acameradevice_createcapturesession
     camera_status_t start_capture(ndk_camera_session_t& info, ACameraCaptureSession_stateCallbacks& on_state_change,
                                   ACameraCaptureSession_captureCallbacks& on_capture_event,  //
                                   ANativeWindow* window) noexcept(false);
     camera_status_t start_capture(ndk_camera_session_t& info, ACameraCaptureSession_stateCallbacks& on_state_change,
                                   ACameraCaptureSession_captureCallbacks& on_capture_event,  //
                                   ANativeWindow* window0, ANativeWindow* window1) noexcept(false);
+    /// @see https://developer.android.com/ndk/reference/group/camera#acameradevice_createcapturesession
     camera_status_t start_repeat(ndk_camera_session_t& info, ACameraCaptureSession_stateCallbacks& on_state_change,
                                  ACameraCaptureSession_captureCallbacks& on_capture_event,  //
                                  ANativeWindow* window) noexcept(false);

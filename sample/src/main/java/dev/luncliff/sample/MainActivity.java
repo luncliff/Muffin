@@ -23,7 +23,7 @@ import dev.luncliff.muffin.DeviceManager;
 import dev.luncliff.sample.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, SurfaceHolder.Callback2 {
-    static { 
+    static {
         System.loadLibrary("sample");
     }
     static int windowFlags = WindowManager.LayoutParams.FLAG_FULLSCREEN
@@ -34,10 +34,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private SurfaceHolder holder0;
     private DeviceHandle camera;
 
-    private void requestPermissions(){
+    private void requestPermissions() {
         Activity activity = this;
-        if(ActivityCompat.checkSelfPermission(activity, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
-            ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.CAMERA}, 0xBEEF);
+        if (ActivityCompat.checkSelfPermission(activity,
+                Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
+            ActivityCompat.requestPermissions(activity, new String[] { Manifest.permission.CAMERA }, 0xBEEF);
     }
 
     @Override
@@ -53,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         holder0 = view0.getHolder();
         holder0.addCallback(this);
         holder0.setFormat(ImageFormat.YUV_420_888); // Use `PixelFormat.RGBX_8888` for Graphics output
-        holder0.setFixedSize(1280, 720);
+        holder0.setFixedSize(1920, 1080);
     }
 
     @Override
@@ -70,9 +71,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Log.i("MainActivity", "onPause");
         camera.close();
         // This won't happen. We may try more detailed control but not here...
-        if(view0.getHolder() != holder0){
-             holder0.removeCallback(this);
-             view0.setVisibility(View.GONE);
+        if (view0.getHolder() != holder0) {
+            holder0.removeCallback(this);
+            view0.setVisibility(View.GONE);
         }
     }
 

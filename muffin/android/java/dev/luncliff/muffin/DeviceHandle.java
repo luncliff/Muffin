@@ -4,6 +4,7 @@ import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.os.Handler;
+import android.util.Size;
 import android.view.Surface;
 
 import androidx.annotation.NonNull;
@@ -25,6 +26,14 @@ public class DeviceHandle {
      *         {@link CameraCharacteristics#LENS_FACING_EXTERNAL }
      */
     public native int facing();
+
+    private native int maxWidth();
+
+    private native int maxHeight();
+
+    public Size getSize() {
+        return new Size(maxWidth(), maxHeight());
+    }
 
     /**
      * Open a camera device
