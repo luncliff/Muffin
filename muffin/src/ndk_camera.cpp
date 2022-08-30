@@ -179,18 +179,9 @@ void ndk_camera_manager_t::close_device(ndk_camera_session_t& info) noexcept {
     }
 }
 
-struct camera_output_target_t {
-    ACameraOutputTarget* handle = nullptr;
-
-   public:
-    explicit camera_output_target_t(ANativeWindow* window) { ACameraOutputTarget_create(window, &handle); }
-    ~camera_output_target_t() { ACameraOutputTarget_free(handle); }
-};
-
 /// @brief Designate target surface in request
 struct capture_request_t {
     ACaptureRequest* handle = nullptr;
-    ACameraOutputTarget* target = nullptr;
 
    public:
     /// @param type TEMPLATE_RECORD, TEMPLATE_PREVIEW, TEMPLATE_MANUAL
@@ -198,14 +189,23 @@ struct capture_request_t {
         if (auto status = ACameraDevice_createCaptureRequest(device, type, &handle); status != ACAMERA_OK)
             throw std::system_error{status, get_ndk_camera_errors(), "ACameraDevice_createCaptureRequest"};
     }
-    ~capture_request_t() {
-        if (target) ACaptureRequest_removeTarget(handle, target);
-        ACaptureRequest_free(handle);
+    ~capture_request_t() { ACaptureRequest_free(handle); }
+};
+
+struct camera_output_target_t {
+    ACameraOutputTarget* handle = nullptr;
+    ACaptureRequest* request = nullptr;
+
+   public:
+    explicit camera_output_target_t(ANativeWindow* window) { ACameraOutputTarget_create(window, &handle); }
+    ~camera_output_target_t() {
+        if (request) ACaptureRequest_removeTarget(request, handle);
+        ACameraOutputTarget_free(handle);
     }
 
-    void bind(ACameraOutputTarget* target) noexcept(false) {
-        this->target = target;
-        auto status = ACaptureRequest_addTarget(handle, target);
+    void bind(ACaptureRequest* r) {
+        request = r;
+        auto status = ACaptureRequest_addTarget(request, handle);
         if (status != ACAMERA_OK) throw std::system_error{status, get_ndk_camera_errors(), "ACaptureRequest_addTarget"};
     }
 };
@@ -213,7 +213,6 @@ struct capture_request_t {
 /// @brief container for multiplexing of session output
 struct session_output_container_t {
     ACaptureSessionOutputContainer* handle = nullptr;
-    ACaptureSessionOutput* output = nullptr;
 
    public:
     session_output_container_t() {
@@ -221,21 +220,12 @@ struct session_output_container_t {
         if (status != ACAMERA_OK)
             throw std::system_error{status, get_ndk_camera_errors(), "ACaptureSessionOutputContainer_create"};
     }
-    ~session_output_container_t() {
-        if (output) ACaptureSessionOutputContainer_remove(handle, output);
-        ACaptureSessionOutputContainer_free(handle);
-    }
-
-    void bind(ACaptureSessionOutput* output) noexcept(false) {
-        this->output = output;
-        auto status = ACaptureSessionOutputContainer_add(handle, output);
-        if (status != ACAMERA_OK)
-            throw std::system_error{status, get_ndk_camera_errors(), "ACaptureSessionOutputContainer_add"};
-    }
+    ~session_output_container_t() { ACaptureSessionOutputContainer_free(handle); }
 };
 
 struct session_output_t {
     ACaptureSessionOutput* handle = nullptr;
+    ACaptureSessionOutputContainer* container = nullptr;
 
    public:
     explicit session_output_t(ANativeWindow* window) {
@@ -243,15 +233,26 @@ struct session_output_t {
         if (status != ACAMERA_OK)
             throw std::system_error{status, get_ndk_camera_errors(), "ACaptureSessionOutput_create"};
     }
-    ~session_output_t() { ACaptureSessionOutput_free(handle); }
+    ~session_output_t() {
+        if (container) ACaptureSessionOutputContainer_remove(container, handle);
+        ACaptureSessionOutput_free(handle);
+    }
+
+    void bind(ACaptureSessionOutputContainer* c) noexcept(false) {
+        container = c;
+        auto status = ACaptureSessionOutputContainer_add(container, handle);
+        if (status != ACAMERA_OK)
+            throw std::system_error{status, get_ndk_camera_errors(), "ACaptureSessionOutputContainer_add"};
+    }
 };
 
-camera_status_t ndk_camera_manager_t::start_capture(
-    ndk_camera_session_t& info, ANativeWindow* window, ACameraCaptureSession_stateCallbacks& on_state_change,
-    ACameraCaptureSession_captureCallbacks& on_capture_event) noexcept(false) {
+camera_status_t ndk_camera_manager_t::start_capture(ndk_camera_session_t& info,
+                                                    ACameraCaptureSession_stateCallbacks& on_state_change,
+                                                    ACameraCaptureSession_captureCallbacks& on_capture_event,
+                                                    ANativeWindow* window) noexcept(false) {
     session_output_container_t outputs{};
     session_output_t output{window};
-    outputs.bind(output.handle);
+    output.bind(outputs.handle);
     if (auto status = ACameraDevice_createCaptureSession(info.device, outputs.handle, &on_state_change, &info.session);
         status != ACAMERA_OK) {
         spdlog::error("{}: {}", "ACameraDevice_createCaptureSession", status);
@@ -259,9 +260,38 @@ camera_status_t ndk_camera_manager_t::start_capture(
     }
     info.repeating = false;
 
-    camera_output_target_t target{window};
     capture_request_t request{info.device, TEMPLATE_STILL_CAPTURE};
-    request.bind(target.handle);
+    camera_output_target_t target{window};
+    target.bind(request.handle);
+    if (auto status =
+            ACameraCaptureSession_capture(info.session, &on_capture_event, 1, &request.handle, &info.sequence_id);
+        status != ACAMERA_OK) {
+        spdlog::error("{}: {}", "ACameraCaptureSession_capture", status);
+        return status;
+    }
+    return ACAMERA_OK;
+}
+camera_status_t ndk_camera_manager_t::start_capture(ndk_camera_session_t& info,
+                                                    ACameraCaptureSession_stateCallbacks& on_state_change,
+                                                    ACameraCaptureSession_captureCallbacks& on_capture_event,
+                                                    ANativeWindow* window0, ANativeWindow* window1) noexcept(false) {
+    session_output_container_t outputs{};
+    session_output_t output0{window0};
+    output0.bind(outputs.handle);
+    session_output_t output1{window1};
+    output1.bind(outputs.handle);
+    if (auto status = ACameraDevice_createCaptureSession(info.device, outputs.handle, &on_state_change, &info.session);
+        status != ACAMERA_OK) {
+        spdlog::error("{}: {}", "ACameraDevice_createCaptureSession", status);
+        return status;
+    }
+    info.repeating = false;
+
+    capture_request_t request{info.device, TEMPLATE_STILL_CAPTURE};
+    camera_output_target_t target0{window0};
+    target0.bind(request.handle);
+    camera_output_target_t target1{window1};
+    target1.bind(request.handle);
     if (auto status =
             ACameraCaptureSession_capture(info.session, &on_capture_event, 1, &request.handle, &info.sequence_id);
         status != ACAMERA_OK) {
@@ -271,12 +301,13 @@ camera_status_t ndk_camera_manager_t::start_capture(
     return ACAMERA_OK;
 }
 
-camera_status_t ndk_camera_manager_t::start_repeat(
-    ndk_camera_session_t& info, ANativeWindow* window, ACameraCaptureSession_stateCallbacks& on_state_change,
-    ACameraCaptureSession_captureCallbacks& on_capture_event) noexcept(false) {
+camera_status_t ndk_camera_manager_t::start_repeat(ndk_camera_session_t& info,
+                                                   ACameraCaptureSession_stateCallbacks& on_state_change,
+                                                   ACameraCaptureSession_captureCallbacks& on_capture_event,
+                                                   ANativeWindow* window) noexcept(false) {
     session_output_container_t outputs{};
     session_output_t output{window};
-    outputs.bind(output.handle);
+    output.bind(outputs.handle);
     if (auto status = ACameraDevice_createCaptureSession(info.device, outputs.handle, &on_state_change, &info.session);
         status != ACAMERA_OK) {
         spdlog::error("{}: {}", "ACameraDevice_createCaptureSession", status);
@@ -284,9 +315,39 @@ camera_status_t ndk_camera_manager_t::start_repeat(
     }
     info.repeating = true;
 
-    camera_output_target_t target{window};
     capture_request_t request{info.device, TEMPLATE_PREVIEW};
-    request.bind(target.handle);
+    camera_output_target_t target{window};
+    target.bind(request.handle);
+    if (auto status = ACameraCaptureSession_setRepeatingRequest(info.session, &on_capture_event, 1, &request.handle,
+                                                                &info.sequence_id);
+        status != ACAMERA_OK) {
+        spdlog::error("{}: {}", "ACameraCaptureSession_setRepeatingRequest", status);
+        return status;
+    }
+    return ACAMERA_OK;
+}
+
+camera_status_t ndk_camera_manager_t::start_repeat(ndk_camera_session_t& info,
+                                                   ACameraCaptureSession_stateCallbacks& on_state_change,
+                                                   ACameraCaptureSession_captureCallbacks& on_capture_event,
+                                                   ANativeWindow* window0, ANativeWindow* window1) noexcept(false) {
+    session_output_container_t outputs{};
+    session_output_t output0{window0};
+    output0.bind(outputs.handle);
+    session_output_t output1{window1};
+    output1.bind(outputs.handle);
+    if (auto status = ACameraDevice_createCaptureSession(info.device, outputs.handle, &on_state_change, &info.session);
+        status != ACAMERA_OK) {
+        spdlog::error("{}: {}", "ACameraDevice_createCaptureSession", status);
+        return status;
+    }
+    info.repeating = true;
+
+    capture_request_t request{info.device, TEMPLATE_PREVIEW};
+    camera_output_target_t target0{window0};
+    target0.bind(request.handle);
+    camera_output_target_t target1{window1};
+    target1.bind(request.handle);
     if (auto status = ACameraCaptureSession_setRepeatingRequest(info.session, &on_capture_event, 1, &request.handle,
                                                                 &info.sequence_id);
         status != ACAMERA_OK) {
