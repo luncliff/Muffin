@@ -32,12 +32,18 @@ ndk_camera_error_category_t& get_ndk_camera_errors() noexcept;
 /**
  * @see https://developer.android.com/ndk/reference/group/camera
  */
-struct ndk_camera_session_t {
+struct ndk_camera_session_t final {
     ACameraDevice* device = nullptr;
     ACameraCaptureSession* session = nullptr;
     uint16_t index = UINT16_MAX;
     bool repeating = false;                      // flag to indicate if the session is repeating
     int sequence_id = CAPTURE_SEQUENCE_ID_NONE;  // sequence ID from capture session
+};
+
+struct ndk_capture_configuration_t final {
+    using handler_t = void (*)(void*, ACaptureRequest*);
+    void* context;
+    handler_t handler;
 };
 
 /**
@@ -72,16 +78,18 @@ class ndk_camera_manager_t final {
     camera_status_t start_capture(ndk_camera_session_t& info, ACameraCaptureSession_stateCallbacks& on_state_change,
                                   ACameraCaptureSession_captureCallbacks& on_capture_event,  //
                                   ANativeWindow* window) noexcept(false);
-    camera_status_t start_capture(ndk_camera_session_t& info, ACameraCaptureSession_stateCallbacks& on_state_change,
+    camera_status_t start_capture(ndk_camera_session_t& info, ndk_capture_configuration_t& config,
+                                  ACameraCaptureSession_stateCallbacks& on_state_change,
                                   ACameraCaptureSession_captureCallbacks& on_capture_event,  //
-                                  ANativeWindow* window0, ANativeWindow* window1) noexcept(false);
+                                  ANativeWindow* window) noexcept(false);
     /// @see https://developer.android.com/ndk/reference/group/camera#acameradevice_createcapturesession
     camera_status_t start_repeat(ndk_camera_session_t& info, ACameraCaptureSession_stateCallbacks& on_state_change,
                                  ACameraCaptureSession_captureCallbacks& on_capture_event,  //
                                  ANativeWindow* window) noexcept(false);
-    camera_status_t start_repeat(ndk_camera_session_t& info, ACameraCaptureSession_stateCallbacks& on_state_change,
+    camera_status_t start_repeat(ndk_camera_session_t& info, ndk_capture_configuration_t& config,
+                                 ACameraCaptureSession_stateCallbacks& on_state_change,
                                  ACameraCaptureSession_captureCallbacks& on_capture_event,  //
-                                 ANativeWindow* window0, ANativeWindow* window1) noexcept(false);
+                                 ANativeWindow* window) noexcept(false);
     void close_session(ndk_camera_session_t& info) noexcept(false);
 
     uint32_t get_index(ACameraDevice* device) const noexcept;

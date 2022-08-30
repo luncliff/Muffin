@@ -271,15 +271,13 @@ camera_status_t ndk_camera_manager_t::start_capture(ndk_camera_session_t& info,
     }
     return ACAMERA_OK;
 }
-camera_status_t ndk_camera_manager_t::start_capture(ndk_camera_session_t& info,
+camera_status_t ndk_camera_manager_t::start_capture(ndk_camera_session_t& info, ndk_capture_configuration_t& config,
                                                     ACameraCaptureSession_stateCallbacks& on_state_change,
                                                     ACameraCaptureSession_captureCallbacks& on_capture_event,
-                                                    ANativeWindow* window0, ANativeWindow* window1) noexcept(false) {
+                                                    ANativeWindow* window0) noexcept(false) {
     session_output_container_t outputs{};
     session_output_t output0{window0};
     output0.bind(outputs.handle);
-    session_output_t output1{window1};
-    output1.bind(outputs.handle);
     if (auto status = ACameraDevice_createCaptureSession(info.device, outputs.handle, &on_state_change, &info.session);
         status != ACAMERA_OK) {
         spdlog::error("{}: {}", "ACameraDevice_createCaptureSession", status);
@@ -288,10 +286,10 @@ camera_status_t ndk_camera_manager_t::start_capture(ndk_camera_session_t& info,
     info.repeating = false;
 
     capture_request_t request{info.device, TEMPLATE_STILL_CAPTURE};
+    if (config.handler) config.handler(config.context, request.handle);
     camera_output_target_t target0{window0};
     target0.bind(request.handle);
-    camera_output_target_t target1{window1};
-    target1.bind(request.handle);
+
     if (auto status =
             ACameraCaptureSession_capture(info.session, &on_capture_event, 1, &request.handle, &info.sequence_id);
         status != ACAMERA_OK) {
@@ -318,6 +316,7 @@ camera_status_t ndk_camera_manager_t::start_repeat(ndk_camera_session_t& info,
     capture_request_t request{info.device, TEMPLATE_PREVIEW};
     camera_output_target_t target{window};
     target.bind(request.handle);
+
     if (auto status = ACameraCaptureSession_setRepeatingRequest(info.session, &on_capture_event, 1, &request.handle,
                                                                 &info.sequence_id);
         status != ACAMERA_OK) {
@@ -327,15 +326,13 @@ camera_status_t ndk_camera_manager_t::start_repeat(ndk_camera_session_t& info,
     return ACAMERA_OK;
 }
 
-camera_status_t ndk_camera_manager_t::start_repeat(ndk_camera_session_t& info,
+camera_status_t ndk_camera_manager_t::start_repeat(ndk_camera_session_t& info, ndk_capture_configuration_t& config,
                                                    ACameraCaptureSession_stateCallbacks& on_state_change,
                                                    ACameraCaptureSession_captureCallbacks& on_capture_event,
-                                                   ANativeWindow* window0, ANativeWindow* window1) noexcept(false) {
+                                                   ANativeWindow* window0) noexcept(false) {
     session_output_container_t outputs{};
     session_output_t output0{window0};
     output0.bind(outputs.handle);
-    session_output_t output1{window1};
-    output1.bind(outputs.handle);
     if (auto status = ACameraDevice_createCaptureSession(info.device, outputs.handle, &on_state_change, &info.session);
         status != ACAMERA_OK) {
         spdlog::error("{}: {}", "ACameraDevice_createCaptureSession", status);
@@ -344,10 +341,10 @@ camera_status_t ndk_camera_manager_t::start_repeat(ndk_camera_session_t& info,
     info.repeating = true;
 
     capture_request_t request{info.device, TEMPLATE_PREVIEW};
+    if (config.handler) config.handler(config.context, request.handle);
     camera_output_target_t target0{window0};
     target0.bind(request.handle);
-    camera_output_target_t target1{window1};
-    target1.bind(request.handle);
+
     if (auto status = ACameraCaptureSession_setRepeatingRequest(info.session, &on_capture_event, 1, &request.handle,
                                                                 &info.sequence_id);
         status != ACAMERA_OK) {
