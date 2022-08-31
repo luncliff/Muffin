@@ -81,13 +81,13 @@ using native_window_ptr = std::unique_ptr<ANativeWindow, void (*)(ANativeWindow*
 
 extern "C" {
 
-JNIEXPORT void JNICALL Java_dev_luncliff_muffin_DeviceManager_Init(JNIEnv* env, jclass clazz) {
+JNIEXPORT void JNICALL Java_dev_luncliff_muffin_CameraManager_Init(JNIEnv* env, jclass clazz) {
     static std::once_flag flag{};
     return std::call_once(flag, init_camera_manager, env, clazz);
 }
 
 JNIEXPORT
-jint Java_dev_luncliff_muffin_DeviceManager_GetDeviceCount(JNIEnv* env, jclass) noexcept {
+jint Java_dev_luncliff_muffin_CameraManager_GetDeviceCount(JNIEnv* env, jclass) noexcept {
     try {
         return static_cast<jint>(camera_manager->count());
     } catch (const std::exception& ex) {
@@ -98,7 +98,7 @@ jint Java_dev_luncliff_muffin_DeviceManager_GetDeviceCount(JNIEnv* env, jclass) 
 }
 
 JNIEXPORT
-void Java_dev_luncliff_muffin_DeviceManager_SetDeviceData(JNIEnv* env, jclass, jobjectArray devices) noexcept {
+void Java_dev_luncliff_muffin_CameraManager_SetDeviceData(JNIEnv* env, jclass, jobjectArray devices) noexcept {
     // env->FindClass("dev/luncliff/muffin/DeviceHandle");
     int num_devices = static_cast<int>(camera_manager->count());
     // https://developer.android.com/ndk/reference/group/camera
@@ -111,7 +111,7 @@ void Java_dev_luncliff_muffin_DeviceManager_SetDeviceData(JNIEnv* env, jclass, j
 }
 
 JNIEXPORT
-int Java_dev_luncliff_muffin_DeviceHandle_facing(JNIEnv* env, jobject self) noexcept {
+int Java_dev_luncliff_muffin_CameraHandle_facing(JNIEnv* env, jobject self) noexcept {
     ndk_camera_session_t* ptr = cast_device_handle(env, self);
     ACameraMetadata* metadata = camera_manager->get_metadata(ptr->device);
     if (metadata == nullptr) return ACAMERA_LENS_FACING_EXTERNAL;
@@ -119,7 +119,7 @@ int Java_dev_luncliff_muffin_DeviceHandle_facing(JNIEnv* env, jobject self) noex
 }
 
 JNIEXPORT
-int Java_dev_luncliff_muffin_DeviceHandle_maxWidth(JNIEnv* env, jobject self) noexcept {
+int Java_dev_luncliff_muffin_CameraHandle_maxWidth(JNIEnv* env, jobject self) noexcept {
     ndk_camera_session_t* ptr = cast_device_handle(env, self);
     ACameraMetadata* metadata = camera_manager->get_metadata(ptr->device);
     if (metadata == nullptr) return 0;
@@ -128,7 +128,7 @@ int Java_dev_luncliff_muffin_DeviceHandle_maxWidth(JNIEnv* env, jobject self) no
 }
 
 JNIEXPORT
-int Java_dev_luncliff_muffin_DeviceHandle_maxHeight(JNIEnv* env, jobject self) noexcept {
+int Java_dev_luncliff_muffin_CameraHandle_maxHeight(JNIEnv* env, jobject self) noexcept {
     ndk_camera_session_t* ptr = cast_device_handle(env, self);
     ACameraMetadata* metadata = camera_manager->get_metadata(ptr->device);
     if (metadata == nullptr) return 0;
@@ -137,7 +137,7 @@ int Java_dev_luncliff_muffin_DeviceHandle_maxHeight(JNIEnv* env, jobject self) n
 }
 
 JNIEXPORT
-void Java_dev_luncliff_muffin_DeviceHandle_open(JNIEnv* env, jobject self) noexcept {
+void Java_dev_luncliff_muffin_CameraHandle_open(JNIEnv* env, jobject self) noexcept {
     try {
         ndk_camera_session_t* ptr = cast_device_handle(env, self);
 
@@ -155,14 +155,14 @@ void Java_dev_luncliff_muffin_DeviceHandle_open(JNIEnv* env, jobject self) noexc
 }
 
 JNIEXPORT
-void Java_dev_luncliff_muffin_DeviceHandle_close(JNIEnv* env, jobject self) noexcept {
+void Java_dev_luncliff_muffin_CameraHandle_close(JNIEnv* env, jobject self) noexcept {
     ndk_camera_session_t* ptr = cast_device_handle(env, self);
     if (ptr == nullptr) return;
     camera_manager->close_device(*ptr);
 }
 
 JNIEXPORT
-void Java_dev_luncliff_muffin_DeviceHandle_startRepeat(JNIEnv* env, jobject self, jobject surface) noexcept {
+void Java_dev_luncliff_muffin_CameraHandle_startRepeat(JNIEnv* env, jobject self, jobject surface) noexcept {
     auto ptr = cast_device_handle(env, self);
 
     // `ANativeWindow_fromSurface` acquires a reference
@@ -203,7 +203,7 @@ void Java_dev_luncliff_muffin_DeviceHandle_startRepeat(JNIEnv* env, jobject self
 }
 
 JNIEXPORT
-void Java_dev_luncliff_muffin_DeviceHandle_stopRepeat(JNIEnv* env, jobject self) noexcept {
+void Java_dev_luncliff_muffin_CameraHandle_stopRepeat(JNIEnv* env, jobject self) noexcept {
     try {
         auto ptr = cast_device_handle(env, self);
         camera_manager->close_session(*ptr);
@@ -214,7 +214,7 @@ void Java_dev_luncliff_muffin_DeviceHandle_stopRepeat(JNIEnv* env, jobject self)
 }
 
 JNIEXPORT
-void Java_dev_luncliff_muffin_DeviceHandle_startCapture(JNIEnv* env, jobject self, jobject surface) noexcept {
+void Java_dev_luncliff_muffin_CameraHandle_startCapture(JNIEnv* env, jobject self, jobject surface) noexcept {
     auto ptr = cast_device_handle(env, self);
 
     // `ANativeWindow_fromSurface` acquires a reference
@@ -255,7 +255,7 @@ void Java_dev_luncliff_muffin_DeviceHandle_startCapture(JNIEnv* env, jobject sel
 }
 
 JNIEXPORT
-void Java_dev_luncliff_muffin_DeviceHandle_stopCapture(JNIEnv* env, jobject self) noexcept {
+void Java_dev_luncliff_muffin_CameraHandle_stopCapture(JNIEnv* env, jobject self) noexcept {
     try {
         auto ptr = cast_device_handle(env, self);
         camera_manager->close_session(*ptr);

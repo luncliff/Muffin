@@ -9,17 +9,15 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
-import android.graphics.PixelFormat;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceHolder;
-import android.view.Surface;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import dev.luncliff.AutoFitSurfaceView;
-import dev.luncliff.muffin.DeviceHandle;
-import dev.luncliff.muffin.DeviceManager;
+import dev.luncliff.muffin.CameraHandle;
+import dev.luncliff.muffin.CameraManager;
 import dev.luncliff.sample.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, SurfaceHolder.Callback2 {
@@ -32,7 +30,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private InputMethodManager inputs;
     private AutoFitSurfaceView view0;
     private SurfaceHolder holder0;
-    private DeviceHandle camera;
+    private CameraHandle camera;
 
     private void requestPermissions() {
         Activity activity = this;
@@ -62,7 +60,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onResume();
         Log.i("MainActivity", "onResume");
         requestPermissions();
-        camera = DeviceManager.GetDevices()[0];
+        camera = CameraManager.GetDevices()[0];
     }
 
     @Override

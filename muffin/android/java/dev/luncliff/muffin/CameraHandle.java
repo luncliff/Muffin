@@ -17,7 +17,7 @@ import androidx.annotation.NonNull;
  * @todo capture request with configuration
  * @todo multiple surface request
  */
-public class DeviceHandle {
+public class CameraHandle {
     private long ptr = 0;
 
     /**
@@ -48,7 +48,7 @@ public class DeviceHandle {
      * opened This method is named to support {@link AutoCloseable} in future update
      *
      * @see CameraCaptureSession#close()
-     * @see DeviceHandle#close()
+     * @see CameraHandle#close()
      */
     public native void close();
 
@@ -73,7 +73,7 @@ public class DeviceHandle {
     /**
      * Stop the repeating request
      * 
-     * @see DeviceHandle#startRepeat(Surface)
+     * @see CameraHandle#startRepeat(Surface)
      */
     public native void stopRepeat();
 
@@ -98,7 +98,7 @@ public class DeviceHandle {
     /**
      * Stop(abort) the capture request
      * 
-     * @see DeviceHandle#startCapture(Surface)
+     * @see CameraHandle#startCapture(Surface)
      */
     public native void stopCapture();
 

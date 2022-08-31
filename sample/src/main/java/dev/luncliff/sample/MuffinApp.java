@@ -1,7 +1,6 @@
 package dev.luncliff.sample;
 
 import android.app.Application;
-import android.hardware.camera2.CameraManager;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -11,7 +10,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import dev.luncliff.muffin.DeviceManager;
+import dev.luncliff.muffin.CameraManager;
 
 public class MuffinApp extends Application {
     private final HandlerThread thread0 = new HandlerThread("muffin-thread-0");
@@ -38,8 +37,8 @@ public class MuffinApp extends Application {
     public void onCreate() {
         super.onCreate();
         setupHandler();
-        DeviceManager.Init();
-        Log.i("App", String.format("Camera Count: %d", DeviceManager.GetDeviceCount()));
+        CameraManager.Init();
+        Log.i("App", String.format("Camera Count: %d", CameraManager.GetDeviceCount()));
     }
 
     @Override
