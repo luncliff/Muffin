@@ -32,12 +32,18 @@ ndk_camera_error_category_t& get_ndk_camera_errors() noexcept;
 /**
  * @see https://developer.android.com/ndk/reference/group/camera
  */
-struct ndk_camera_session_t {
+struct ndk_camera_session_t final {
     ACameraDevice* device = nullptr;
     ACameraCaptureSession* session = nullptr;
     uint16_t index = UINT16_MAX;
     bool repeating = false;                      // flag to indicate if the session is repeating
     int sequence_id = CAPTURE_SEQUENCE_ID_NONE;  // sequence ID from capture session
+};
+
+struct ndk_capture_configuration_t final {
+    using handler_t = void (*)(void*, ACaptureRequest*);
+    void* context;
+    handler_t handler;
 };
 
 /**
@@ -51,6 +57,7 @@ class ndk_camera_manager_t final {
     ACameraManager* manager = nullptr;
     ACameraIdList* id_list = nullptr;
     std::array<ACameraMetadata*, 4> metadatas{};  // cached metadata
+    ACameraManager_AvailabilityCallbacks callbacks0{};
 
    public:
     ndk_camera_manager_t() noexcept(false);
@@ -60,6 +67,13 @@ class ndk_camera_manager_t final {
     ndk_camera_manager_t& operator=(const ndk_camera_manager_t&) = delete;
     ndk_camera_manager_t& operator=(ndk_camera_manager_t&&) = delete;
 
+   private:
+    static void camera_available(ndk_camera_manager_t& self, const char* id);
+    static void camera_unavailable(ndk_camera_manager_t& self, const char* id);
+    void on_camera_available(const char* id);
+    void on_camera_unavailable(const char* id);
+
+   public:
     uint32_t count() const noexcept;
 
     camera_status_t open_device(uint32_t idx, ndk_camera_session_t& info,
@@ -68,14 +82,25 @@ class ndk_camera_manager_t final {
     /// @note The function doesn't free metadata
     void close_device(ndk_camera_session_t& info) noexcept;
 
-    camera_status_t start_capture(ndk_camera_session_t& info, ANativeWindow* window,
+    /// @see https://developer.android.com/ndk/reference/group/camera#acameradevice_createcapturesession
+    camera_status_t start_capture(ndk_camera_session_t& info, ACameraCaptureSession_stateCallbacks& on_state_change,
+                                  ACameraCaptureSession_captureCallbacks& on_capture_event,  //
+                                  ANativeWindow* window) noexcept(false);
+    camera_status_t start_capture(ndk_camera_session_t& info, ndk_capture_configuration_t& config,
                                   ACameraCaptureSession_stateCallbacks& on_state_change,
-                                  ACameraCaptureSession_captureCallbacks& on_capture_event) noexcept(false);
-    camera_status_t start_repeat(ndk_camera_session_t& info, ANativeWindow* window,
+                                  ACameraCaptureSession_captureCallbacks& on_capture_event,  //
+                                  ANativeWindow* window) noexcept(false);
+    /// @see https://developer.android.com/ndk/reference/group/camera#acameradevice_createcapturesession
+    camera_status_t start_repeat(ndk_camera_session_t& info, ACameraCaptureSession_stateCallbacks& on_state_change,
+                                 ACameraCaptureSession_captureCallbacks& on_capture_event,  //
+                                 ANativeWindow* window) noexcept(false);
+    camera_status_t start_repeat(ndk_camera_session_t& info, ndk_capture_configuration_t& config,
                                  ACameraCaptureSession_stateCallbacks& on_state_change,
-                                 ACameraCaptureSession_captureCallbacks& on_capture_event) noexcept(false);
+                                 ACameraCaptureSession_captureCallbacks& on_capture_event,  //
+                                 ANativeWindow* window) noexcept(false);
     void close_session(ndk_camera_session_t& info) noexcept(false);
 
+    uint32_t get_index(const char* id) const noexcept;
     uint32_t get_index(ACameraDevice* device) const noexcept;
     ACameraMetadata* get_metadata(ACameraDevice* device) const noexcept;
 };

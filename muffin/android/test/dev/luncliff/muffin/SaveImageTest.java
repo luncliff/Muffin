@@ -43,10 +43,10 @@ public class SaveImageTest {
             Assertions.assertTrue(outFile.delete());
     }
 
-    static DeviceHandle getAnyCamera() {
-        DeviceManager.Init();
-        Assertions.assertNotEquals(0, DeviceManager.GetDeviceCount());
-        for (DeviceHandle device : DeviceManager.GetDevices()) {
+    static CameraHandle getAnyCamera() {
+        CameraManager.Init();
+        Assertions.assertNotEquals(0, CameraManager.GetDeviceCount());
+        for (CameraHandle device : CameraManager.GetDevices()) {
             return device;
         }
         return null;
@@ -54,7 +54,7 @@ public class SaveImageTest {
 
     @Test
     public void saveToFile() {
-        DeviceHandle camera = getAnyCamera();
+        CameraHandle camera = getAnyCamera();
         Assertions.assertNotNull(camera);
         // camera image reader
         try (ImageReader reader = ImageReader.newInstance(640, 480, ImageFormat.YUV_420_888, 2)) {

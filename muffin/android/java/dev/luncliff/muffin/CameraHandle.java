@@ -4,6 +4,7 @@ import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.os.Handler;
+import android.util.Size;
 import android.view.Surface;
 
 import androidx.annotation.NonNull;
@@ -16,7 +17,7 @@ import androidx.annotation.NonNull;
  * @todo capture request with configuration
  * @todo multiple surface request
  */
-public class DeviceHandle {
+public class CameraHandle {
     private long ptr = 0;
 
     /**
@@ -25,6 +26,14 @@ public class DeviceHandle {
      *         {@link CameraCharacteristics#LENS_FACING_EXTERNAL }
      */
     public native int facing();
+
+    private native int maxWidth();
+
+    private native int maxHeight();
+
+    public Size getSize() {
+        return new Size(maxWidth(), maxHeight());
+    }
 
     /**
      * Open a camera device
@@ -39,7 +48,7 @@ public class DeviceHandle {
      * opened This method is named to support {@link AutoCloseable} in future update
      *
      * @see CameraCaptureSession#close()
-     * @see DeviceHandle#close()
+     * @see CameraHandle#close()
      */
     public native void close();
 
@@ -64,7 +73,7 @@ public class DeviceHandle {
     /**
      * Stop the repeating request
      * 
-     * @see DeviceHandle#startRepeat(Surface)
+     * @see CameraHandle#startRepeat(Surface)
      */
     public native void stopRepeat();
 
@@ -89,7 +98,7 @@ public class DeviceHandle {
     /**
      * Stop(abort) the capture request
      * 
-     * @see DeviceHandle#startCapture(Surface)
+     * @see CameraHandle#startCapture(Surface)
      */
     public native void stopCapture();
 
