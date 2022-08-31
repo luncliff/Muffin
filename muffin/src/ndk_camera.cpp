@@ -4,15 +4,33 @@
 #include <camera/NdkCameraMetadataTags.h>
 #include <spdlog/spdlog.h>
 
-void context_on_device_disconnected([[maybe_unused]] ndk_camera_manager_t& context, ACameraDevice* device) noexcept {
+void context_on_device_disconnected([[maybe_unused]] ndk_camera_manager_t& context,  //
+                                    ACameraDevice* device) noexcept {
     const char* id = ACameraDevice_getId(device);
-    spdlog::error("on_device_disconnect: {}", id);
+    spdlog::warn("on_device_disconnect: {}", id);
 }
 
-void context_on_device_error([[maybe_unused]] ndk_camera_manager_t& context, ACameraDevice* device,
-                             int error) noexcept {
+/// @see https://developer.android.com/ndk/reference/group/camera#acameradevice_errorstatecallback
+void context_on_device_error([[maybe_unused]] ndk_camera_manager_t& context,  //
+                             ACameraDevice* device, int code) noexcept {
     const char* id = ACameraDevice_getId(device);
-    spdlog::error("on_device_error: {} {}", id, error);
+    const char* message = [error = code]() {
+        switch (error) {
+            case ERROR_CAMERA_DEVICE:
+                return "Fatal error. The camera device needs to be re-opened to be used again.";
+            case ERROR_CAMERA_DISABLED:
+                return "The camera is disabled due to a device policy, and cannot be opened.";
+            case ERROR_CAMERA_IN_USE:
+                return "The camera device is in use already.";
+            case ERROR_CAMERA_SERVICE:
+                return "The device may need to be shut down and restarted to restore camera function.";
+            case ERROR_MAX_CAMERAS_IN_USE:
+                return "The system-wide limit for number of open cameras or camera resources has been reached.";
+            default:
+                return "Unknown error code";
+        }
+    }();
+    spdlog::error("on_device_error: id {} code {}: {}", id, code, message);
 }
 
 // session state callbacks
