@@ -150,25 +150,53 @@ ndk_camera_manager_t::ndk_camera_manager_t() noexcept(false) : manager{ACameraMa
         camera_status_t status = ACameraManager_getCameraCharacteristics(manager, camera, &metadatas[i]);
         if (status != ACAMERA_OK) spdlog::warn("{}: {}", "ACameraManager_getCameraCharacteristics", status);
     }
+    callbacks0.context = this;
+    callbacks0.onCameraAvailable =
+        reinterpret_cast<ACameraManager_AvailabilityCallback>(&ndk_camera_manager_t::camera_available);
+    callbacks0.onCameraUnavailable =
+        reinterpret_cast<ACameraManager_AvailabilityCallback>(&ndk_camera_manager_t::camera_unavailable);
+    if (auto status = ACameraManager_registerAvailabilityCallback(manager, &callbacks0); status != ACAMERA_OK)
+        spdlog::error("{}: {}", "ACameraManager_registerAvailabilityCallback", get_ndk_camera_errors().message(status));
 }
 
 ndk_camera_manager_t::~ndk_camera_manager_t() noexcept {
+    ACameraManager_unregisterAvailabilityCallback(manager, &callbacks0);
     for (auto meta : metadatas)
         if (meta) ACameraMetadata_free(meta);
     if (id_list) ACameraManager_deleteCameraIdList(id_list);
     if (manager) ACameraManager_delete(manager);
 }
 
+void ndk_camera_manager_t::camera_available(ndk_camera_manager_t& self, const char* id) {
+    return self.on_camera_available(id);
+}
+void ndk_camera_manager_t::camera_unavailable(ndk_camera_manager_t& self, const char* id) {
+    return self.on_camera_unavailable(id);
+}
+
+void ndk_camera_manager_t::on_camera_available(const char* id) {
+    auto idx = get_index(id);
+    spdlog::info("{}: id {} index {}", __func__, id, idx);
+}
+
+void ndk_camera_manager_t::on_camera_unavailable(const char* id) {
+    auto idx = get_index(id);
+    spdlog::info("{}: id {} index {}", __func__, id, idx);
+}
+
 uint32_t ndk_camera_manager_t::count() const noexcept { return static_cast<uint32_t>(id_list->numCameras); }
 
-uint32_t ndk_camera_manager_t::get_index(ACameraDevice* device) const noexcept {
-    auto _id = ACameraDevice_getId(device);
-    std::string_view expected{_id, strnlen(_id, 250)};
+uint32_t ndk_camera_manager_t::get_index(const char* id) const noexcept {
+    std::string_view expected{id, strnlen(id, 250)};
     for (int i = 0; i < id_list->numCameras; ++i) {
         std::string_view name{id_list->cameraIds[i], strnlen(id_list->cameraIds[i], 250)};
         if (name == expected) return static_cast<uint32_t>(i);
     }
     return UINT32_MAX;
+}
+
+uint32_t ndk_camera_manager_t::get_index(ACameraDevice* device) const noexcept {
+    return get_index(ACameraDevice_getId(device));
 }
 
 ACameraMetadata* ndk_camera_manager_t::get_metadata(ACameraDevice* device) const noexcept {

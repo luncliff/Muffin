@@ -57,6 +57,7 @@ class ndk_camera_manager_t final {
     ACameraManager* manager = nullptr;
     ACameraIdList* id_list = nullptr;
     std::array<ACameraMetadata*, 4> metadatas{};  // cached metadata
+    ACameraManager_AvailabilityCallbacks callbacks0{};
 
    public:
     ndk_camera_manager_t() noexcept(false);
@@ -66,6 +67,13 @@ class ndk_camera_manager_t final {
     ndk_camera_manager_t& operator=(const ndk_camera_manager_t&) = delete;
     ndk_camera_manager_t& operator=(ndk_camera_manager_t&&) = delete;
 
+   private:
+    static void camera_available(ndk_camera_manager_t& self, const char* id);
+    static void camera_unavailable(ndk_camera_manager_t& self, const char* id);
+    void on_camera_available(const char* id);
+    void on_camera_unavailable(const char* id);
+
+   public:
     uint32_t count() const noexcept;
 
     camera_status_t open_device(uint32_t idx, ndk_camera_session_t& info,
@@ -92,6 +100,7 @@ class ndk_camera_manager_t final {
                                  ANativeWindow* window) noexcept(false);
     void close_session(ndk_camera_session_t& info) noexcept(false);
 
+    uint32_t get_index(const char* id) const noexcept;
     uint32_t get_index(ACameraDevice* device) const noexcept;
     ACameraMetadata* get_metadata(ACameraDevice* device) const noexcept;
 };
