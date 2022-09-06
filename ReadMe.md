@@ -1,7 +1,7 @@
 # Muffin
 
 [![Build Status](https://dev.azure.com/luncliff/personal/_apis/build/status/luncliff.Muffin?branchName=main)](https://dev.azure.com/luncliff/personal/_build/latest?definitionId=34&branchName=main)
-[![CircleCI](https://circleci.com/gh/luncliff/Muffin/tree/main.svg?style=shield)](https://circleci.com/gh/luncliff/Muffin/tree/main)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/luncliff/Muffin/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/luncliff/Muffin/tree/main)
 ![Gradle](https://img.shields.io/badge/Gradle-7.2+-02303a)
 ![Android NDK](https://img.shields.io/badge/NDK-22+-3ecf7d)
 ![CMake](https://img.shields.io/badge/CMake-3.21+-00529b)

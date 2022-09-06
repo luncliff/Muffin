@@ -1,12 +1,13 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+import java.net.URI
 
 // https://developer.android.com/studio/build/native-dependencies?hl=en
 plugins {
     id("com.android.library") // version "7.2.2"
     id("org.jetbrains.kotlin.android")
     id("kotlin-android")
-    // id("maven-publish")
+    id("maven-publish")
 }
 repositories {
     google()
@@ -52,10 +53,13 @@ android {
     defaultConfig {
         minSdk = 26
         targetSdk = 32
-        // ndk {
-        //     abiFilters "armeabi-v7a", "arm64-v8a", "x86_64"
-        // }
-        // buildConfigField "String", "VERSION_NAME", "\"1.3.0\""
+        ndk {
+            abiFilters.clear()
+            abiFilters.add("arm64-v8a")
+            abiFilters.add("armeabi-v7a")
+            abiFilters.add("x86_64")
+        }
+        buildConfigField("String", "VERSION_NAME", "\"1.3.0\"")
         externalNativeBuild {
             cmake {
                 cppFlags += "-fno-rtti"
@@ -63,7 +67,7 @@ android {
                 arguments += "-DANDROID_ARM_NEON=ON"
                 arguments += ("-DCMAKE_TOOLCHAIN_FILE:FILEPATH=" + BuildParams.vcpkgToolchainFile)
                 arguments += ("-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE:FILEPATH=" + BuildParams.ndkToolchainFile)
-                // targets = "muffin"
+                targets(BuildParams.projectName)
             }
         }
         // https://github.com/mannodermaus/android-junit5
@@ -125,13 +129,13 @@ tasks.withType<Test> {
 dependencies {
     // https://developers.google.com/ar/develop/java/quickstart
     // api("com.google.ar:core:1.32.0")
-    api("com.google.guava:guava:31.1-jre")
+    // api("com.google.guava:guava:31.1-jre")
     api("org.jetbrains.kotlin:kotlin-stdlib:1.7.10")
 
     // https://search.maven.org/artifact/org.tensorflow/tensorflow-lite
     // https://www.tensorflow.org/lite/performance/gpu_advanced
     // api("org.tensorflow:tensorflow-lite:2.9.0")
-    implementation("org.tensorflow:tensorflow-lite-gpu:2.9.0")
+    // implementation("org.tensorflow:tensorflow-lite-gpu:2.9.0")
     androidTestImplementation("org.tensorflow:tensorflow-lite:2.9.0")
 
     api("androidx.core:core-ktx:1.8.0")
@@ -151,4 +155,33 @@ dependencies {
 
     androidTestImplementation("de.mannodermaus.junit5:android-test-core:1.2.2")
     androidTestRuntimeOnly("de.mannodermaus.junit5:android-test-runner:1.2.2")
+}
+
+
+afterEvaluate {
+    publishing {
+        repositories {
+            maven {
+                url = URI("https://.../repository/nightly")
+                credentials {
+                    username = System.getenv("USERNAME")
+                    password = System.getenv("PASSWORD")
+                }
+            }
+        }
+        publications {
+            create<MavenPublication>("debug") {
+                from(components.getByName("debug"))
+                groupId = "org.dev.luncliff"
+                artifactId = "sample"
+                version = "1.0-SNAPSHOT"
+            }
+            create<MavenPublication>("release") {
+                from(components.getByName("release"))
+                groupId = "org.dev.luncliff"
+                artifactId = "sample-debug"
+                version = "1.0-SNAPSHOT"
+            }
+        }
+    }
 }
