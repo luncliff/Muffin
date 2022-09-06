@@ -103,6 +103,8 @@ class ndk_camera_manager_t final {
     uint32_t get_index(const char* id) const noexcept;
     uint32_t get_index(ACameraDevice* device) const noexcept;
     ACameraMetadata* get_metadata(ACameraDevice* device) const noexcept;
+
+    static void print(const char* device, ACameraMetadata* metadata) noexcept;
 };
 
 /**

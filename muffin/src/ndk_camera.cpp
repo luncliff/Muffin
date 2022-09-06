@@ -1,13 +1,18 @@
 #include "ndk_camera.hpp"
 
+#include <camera/NdkCameraManager.h>
 #include <camera/NdkCameraMetadata.h>
 #include <camera/NdkCameraMetadataTags.h>
 #include <spdlog/spdlog.h>
 
+uint32_t get_device_id(ACameraDevice* device) {
+    int id = ::atoi(ACameraDevice_getId(device));
+    return static_cast<uint32_t>(id);
+}
+
 void context_on_device_disconnected([[maybe_unused]] ndk_camera_manager_t& context,  //
                                     ACameraDevice* device) noexcept {
-    const char* id = ACameraDevice_getId(device);
-    spdlog::warn("on_device_disconnect: {}", id);
+    spdlog::warn("{}: {}", __func__, get_device_id(device));
 }
 
 /// @see https://developer.android.com/ndk/reference/group/camera#acameradevice_errorstatecallback
@@ -30,28 +35,28 @@ void context_on_device_error([[maybe_unused]] ndk_camera_manager_t& context,  //
                 return "Unknown error code";
         }
     }();
-    spdlog::error("on_device_error: id {} code {}: {}", id, code, message);
+    spdlog::error("{}: id {} code {}: {}", __func__, id, code, message);
 }
 
 // session state callbacks
 
 void context_on_session_active(ndk_camera_manager_t&, ACameraCaptureSession*) noexcept {
-    spdlog::debug("on_session_active");
+    spdlog::info("{}", __func__);  // ...
 }
 
 void context_on_session_closed(ndk_camera_manager_t&, ACameraCaptureSession*) noexcept {
-    spdlog::warn("on_session_closed");
+    spdlog::warn("{}", __func__);  // ...
 }
 
 void context_on_session_ready(ndk_camera_manager_t&, ACameraCaptureSession*) noexcept {
-    spdlog::debug("on_session_ready");
+    spdlog::info("{}", __func__);  // ...
 }
 
 // capture callbacks
 
 void context_on_capture_started(ndk_camera_manager_t&, ACameraCaptureSession*,
                                 [[maybe_unused]] const ACaptureRequest* request, uint64_t time_point) noexcept {
-    spdlog::debug("context_on_capture_started  : {}", time_point);
+    spdlog::debug("{}: {}", __func__, time_point);
 }
 
 void context_on_capture_progressed(ndk_camera_manager_t&, ACameraCaptureSession*,
@@ -62,24 +67,23 @@ void context_on_capture_progressed(ndk_camera_manager_t&, ACameraCaptureSession*
     // ACAMERA_SENSOR_TIMESTAMP
     // ACAMERA_SENSOR_INFO_TIMESTAMP_SOURCE
     // ACAMERA_SENSOR_FRAME_DURATION
-    status = ACameraMetadata_getConstEntry(result, ACAMERA_SENSOR_TIMESTAMP, &entry);
-    if (status == ACAMERA_OK) time_point = static_cast<uint64_t>(*(entry.data.i64));
-
-    spdlog::debug("context_on_capture_progressed: {}", time_point);
+    if (status = ACameraMetadata_getConstEntry(result, ACAMERA_SENSOR_TIMESTAMP, &entry); status == ACAMERA_OK) {
+        auto time_point = static_cast<uint64_t>(*(entry.data.i64));
+        spdlog::debug("{}: {}", __func__, time_point);
+    }
 }
 
 void context_on_capture_completed(ndk_camera_manager_t&, ACameraCaptureSession*,
                                   [[maybe_unused]] ACaptureRequest* request, const ACameraMetadata* result) noexcept {
     camera_status_t status = ACAMERA_OK;
     ACameraMetadata_const_entry entry{};
-    uint64_t time_point = 0;
     // ACAMERA_SENSOR_TIMESTAMP
     // ACAMERA_SENSOR_INFO_TIMESTAMP_SOURCE
     // ACAMERA_SENSOR_FRAME_DURATION
-    status = ACameraMetadata_getConstEntry(result, ACAMERA_SENSOR_TIMESTAMP, &entry);
-    if (status == ACAMERA_OK) time_point = static_cast<uint64_t>(*(entry.data.i64));
-
-    spdlog::debug("context_on_capture_completed: {}", time_point);
+    if (status = ACameraMetadata_getConstEntry(result, ACAMERA_SENSOR_TIMESTAMP, &entry); status == ACAMERA_OK) {
+        auto time_point = static_cast<uint64_t>(*(entry.data.i64));
+        spdlog::debug("{}: {}", __func__, time_point);
+    }
 }
 
 void context_on_capture_failed(ndk_camera_manager_t&, ACameraCaptureSession*, [[maybe_unused]] ACaptureRequest* request,
@@ -141,6 +145,65 @@ ndk_camera_error_category_t& get_ndk_camera_errors() noexcept {
     return singleton;
 }
 
+std::string_view get_auto_focus_label(const ACameraMetadata_const_entry& entry, int i) noexcept {
+    auto value = entry.data.u8[i];
+    switch (value) {
+        case ACAMERA_CONTROL_AF_MODE_AUTO:
+            return "AF_MODE_AUTO";
+        case ACAMERA_CONTROL_AF_MODE_CONTINUOUS_PICTURE:
+            return "AF_MODE_CONTINUOUS_PICTURE";
+        case ACAMERA_CONTROL_AF_MODE_CONTINUOUS_VIDEO:
+            return "AF_MODE_CONTINUOUS_VIDEO";
+        case ACAMERA_CONTROL_AF_MODE_EDOF:
+            return "AF_MODE_EDOF";
+        case ACAMERA_CONTROL_AF_MODE_MACRO:
+            return "AF_MODE_MACRO";
+        case ACAMERA_CONTROL_AF_MODE_OFF:
+        default:
+            return "AF_MODE_OFF";
+    }
+}
+
+std::string_view get_auto_white_balance_label(const ACameraMetadata_const_entry&, int) noexcept { return ""; }
+
+std::string_view get_auto_exposure_label(const ACameraMetadata_const_entry& entry, int i) noexcept {
+    auto value = entry.data.u8[i];
+    switch (value) {
+        case ACAMERA_CONTROL_AE_MODE_ON:
+            return "AE_MODE_ON";
+        case ACAMERA_CONTROL_AE_MODE_ON_AUTO_FLASH:
+            return "AE_MODE_ON_AUTO_FLASH";
+        case ACAMERA_CONTROL_AE_MODE_ON_ALWAYS_FLASH:
+            return "AE_MODE_ON_ALWAYS_FLASH";
+        case ACAMERA_CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE:
+            return "AE_MODE_ON_AUTO_FLASH_REDEYE";
+        case ACAMERA_CONTROL_AE_MODE_ON_EXTERNAL_FLASH:
+            return "AE_MODE_ON_EXTERNAL_FLASH";
+        case ACAMERA_CONTROL_AE_MODE_OFF:
+        default:
+            return "AE_MODE_OFF";
+    }
+}
+
+void ndk_camera_manager_t::print(const char* id, ACameraMetadata* metadata) noexcept {
+    spdlog::info("device:");
+    spdlog::info("  id: {}", id);
+    camera_status_t status = ACAMERA_OK;
+    ACameraMetadata_const_entry entry{};
+    if (status = ACameraMetadata_getConstEntry(metadata, ACAMERA_CONTROL_AF_AVAILABLE_MODES, &entry);
+        status == ACAMERA_OK) {
+        spdlog::info("  auto_focus:");
+        for (int i = 0; i < entry.count; ++i)  //
+            spdlog::info("  - {}", get_auto_focus_label(entry, i));
+    }
+    if (status = ACameraMetadata_getConstEntry(metadata, ACAMERA_CONTROL_AE_AVAILABLE_MODES, &entry);
+        status == ACAMERA_OK) {
+        spdlog::info("  auto_exposure:");
+        for (int i = 0; i < entry.count; ++i)  //
+            spdlog::info("  - {}", get_auto_exposure_label(entry, i));
+    }
+}
+
 ndk_camera_manager_t::ndk_camera_manager_t() noexcept(false) : manager{ACameraManager_create()} {
     if (auto status = ACameraManager_getCameraIdList(manager, &id_list); status != ACAMERA_OK)
         throw std::system_error{status, get_ndk_camera_errors(), "ACameraManager_getCameraIdList"};
@@ -148,7 +211,11 @@ ndk_camera_manager_t::ndk_camera_manager_t() noexcept(false) : manager{ACameraMa
     for (int i = 0; i < count; ++i) {
         const char* camera = id_list->cameraIds[i];
         camera_status_t status = ACameraManager_getCameraCharacteristics(manager, camera, &metadatas[i]);
-        if (status != ACAMERA_OK) spdlog::warn("{}: {}", "ACameraManager_getCameraCharacteristics", status);
+        if (status != ACAMERA_OK)
+            spdlog::warn("{}: {}", "ACameraManager_getCameraCharacteristics",
+                         get_ndk_camera_errors().get_message(status));
+        else
+            print(camera, metadatas[i]);
     }
     callbacks0.context = this;
     callbacks0.onCameraAvailable =
