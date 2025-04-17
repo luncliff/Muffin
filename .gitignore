@@ -1,6 +1,7 @@
 .cxx
 .idea
 .vscode
+.kotlin
 
 cmake-*
 build-*
