@@ -1,10 +1,15 @@
 cmake_minimum_required(VERSION 3.21)
+if(CMAKE_SYSTEM_NAME STREQUAL "Android")
+    include("vcpkg_android.cmake")
+endif()
 if(NOT DEFINED MUFFIN_VERSION)
     set(MUFFIN_VERSION 2025.3.0)
 endif()
 project(muffin LANGUAGES CXX VERSION ${MUFFIN_VERSION})
 
 include(GNUInstallDirs)
+
+find_path(GOOGLE_JNI_BIND_INCLUDE_DIR NAMES "jni_bind_release.h" REQUIRED)
 
 find_library(LOG_LIB NAMES log REQUIRED)
 find_library(ANDROID_LIB NAMES android REQUIRED)
@@ -25,7 +30,8 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    # ${CMAKE_CURRENT_SOURCE_DIR}
+    ${GOOGLE_JNI_BIND_INCLUDE_DIR}
 )
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg-configuration.schema.json",
+  "default-registry": {
+    "kind": "git",
+    "repository": "https://github.com/microsoft/vcpkg",
+    "reference": "2025.04.09",
+    "baseline": "ce613c41372b23b1f51333815feb3edd87ef8a8b"
+  },
+  "registries": [
+    {
+      "kind": "git",
+      "repository": "https://github.com/luncliff/vcpkg-registry",
+      "baseline": "700dfc4647f97686bac8a7fcddbf7a31592ccfa1",
+      "packages": [
+        "google-jni-bind"
+      ]
+    }
+  ]
+}

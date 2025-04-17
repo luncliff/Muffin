@@ -1,0 +1,15 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "muffin",
+  "version-date": "2025-04-17",
+  "description": "Android C++ project template",
+  "homepage": "https://github.com/luncliff/Muffin",
+  "supports": "android",
+  "dependencies": [
+    "google-jni-bind",
+    {
+      "name": "libzip",
+      "default-features": false
+    }
+  ]
+}

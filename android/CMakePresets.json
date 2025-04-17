@@ -12,6 +12,8 @@
             "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
             "cacheVariables": {
                 "CMAKE_SYSTEM_NAME": "Android",
+                "VCPKG_MANIFEST_DIR": "${sourceDir}",
+                "VCPKG_INSTALLED_DIR": "${sourceDir}/.cxx",
                 "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": {
                     "type": "FILEPATH",
                     "value": "$env{ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake"
@@ -19,6 +21,7 @@
                 "VCPKG_TARGET_TRIPLET": "unknown"
             },
             "environment": {
+                "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}",
                 "VCPKG_FEATURE_FLAGS": "versions,manifests,registries"
             }
         },
