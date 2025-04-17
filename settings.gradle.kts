@@ -21,3 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Muffin"
 include(":android")
+include(":app")
