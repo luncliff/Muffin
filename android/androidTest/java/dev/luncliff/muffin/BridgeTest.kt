@@ -35,4 +35,17 @@ class BridgeTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         assertEquals("dev.luncliff.muffin.test", context.packageName)
     }
+
+    @Test
+    fun testPackageAssets() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        context.assets.apply {
+            open("mock-file.txt").use {
+                assertEquals(13, it.available())
+            }
+            open("test-mock-file.txt").use {
+                assertEquals(18, it.available())
+            }
+        }
+    }
 }
